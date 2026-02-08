@@ -1,0 +1,8 @@
+#!/bin/bash
+# tts-extract-tiles - Extract tile/board metadata from TTS JSON files
+# Part of tts-tools unified workflow
+
+SCRIPT_DIR="$HOME/Library/CloudStorage/Box-Box/Work/bg/tts-tools"
+
+cd "$SCRIPT_DIR"
+uv run src/extract_tiles.py "$@"

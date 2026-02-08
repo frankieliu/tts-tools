@@ -1,0 +1,74 @@
+#!/bin/bash
+# tts-assets - Download TTS mod assets
+# Part of tts-tools unified workflow
+
+set -e
+
+SCRIPT_DIR="$HOME/Library/CloudStorage/Box-Box/Work/bg/tts-tools"
+
+# Show help
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [[ -z "$1" ]]; then
+    cat << EOF
+Usage: tts-assets <json_file> [options]
+
+Download all assets (images, models, assetbundles) from a TTS deserialized JSON file.
+
+Arguments:
+  json_file                Path to .deserialized.json file
+
+Options:
+  -o, --output-dir DIR     Output directory (default: <json_basename>.deserialized/)
+  --no-verify              Skip SSL certificate verification
+  -h, --help              Show this help message
+
+Examples:
+  tts-assets downloads/3162057688_Evenfall.deserialized.json
+  tts-assets file.deserialized.json -o my_output_dir
+  tts-assets file.deserialized.json --no-verify
+
+Output:
+  <output_dir>/
+  ├── Images/              # Downloaded card images
+  ├── Models/              # Downloaded 3D models
+  ├── Assetbundles/        # Downloaded Unity asset bundles
+  └── Workshop/            # Copy of JSON file
+
+Asset URL Conversion:
+  Automatically converts cloud-3.steamusercontent.com URLs to working format.
+EOF
+    exit 0
+fi
+
+# Convert relative paths to absolute before changing directory
+ORIG_DIR="$(pwd)"
+ARGS=()
+PREV_ARG=""
+
+for arg in "$@"; do
+    # Check if previous arg was -o or --output-dir
+    if [[ "$PREV_ARG" == "-o" ]] || [[ "$PREV_ARG" == "--output-dir" ]]; then
+        # This is the output path, convert to absolute if relative
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    elif [[ -f "$arg" ]] || [[ "$arg" == *".json" ]]; then
+        # This looks like a file path, convert to absolute
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    else
+        # Pass as-is
+        ARGS+=("$arg")
+        PREV_ARG="$arg"
+    fi
+done
+
+# Run with uv
+cd "$SCRIPT_DIR"
+uv run src/download_tts_assets.py "${ARGS[@]}"

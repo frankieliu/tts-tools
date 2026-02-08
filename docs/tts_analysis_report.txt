@@ -1,0 +1,1195 @@
+================================================================================
+TABLETOP SIMULATOR OBJECT ANALYSIS
+Game: Tend
+Date: 1/30/2025 11:18:59 AM
+Complexity: Medium Complexity
+Players: 1-6
+================================================================================
+
+SUMMARY STATISTICS
+--------------------------------------------------------------------------------
+Total Objects: 416
+  Top-level Objects: 217
+  Nested Objects (in decks/bags): 199
+Unique Object Types: 14
+Functional Categories: 16
+
+DISTRIBUTION BY OBJECT TYPE
+--------------------------------------------------------------------------------
+Card                           :  132 objects (0 top-level, 132 nested)
+Custom_Dice                    :   66 objects
+CardCustom                     :   61 objects (36 top-level, 25 nested)
+Custom_Tile                    :   52 objects (22 top-level, 30 nested)
+Infinite_Bag                   :   30 objects
+ScriptingTrigger               :   26 objects
+Custom_Board                   :   19 objects (7 top-level, 12 nested)
+Deck                           :   11 objects
+Custom_Assetbundle             :    8 objects
+HandTrigger                    :    6 objects
+Custom_Model_Bag               :    2 objects
+Chinese_Checkers_Piece         :    1 objects
+Custom_Model                   :    1 objects
+Custom_PDF                     :    1 objects
+
+DISTRIBUTION BY FUNCTIONAL PURPOSE
+--------------------------------------------------------------------------------
+Cards (in deck)                     :  132 objects
+Dice                                :   66 objects
+Tiles/Tokens                        :   52 objects
+Cards (on table)                    :   36 objects
+Token Sources (Infinite Bags)       :   30 objects
+Game Automation/Scripting           :   26 objects
+Scratch Off Cards                   :   25 objects
+Cargo Sheets                        :   12 objects
+Card Decks                          :   11 objects
+3D Decorative Assets                :    8 objects
+Player Boards                       :    7 objects
+Hand Zones                          :    6 objects
+Storage Bags                        :    2 objects
+Special Game Pieces                 :    1 objects
+3D Models                           :    1 objects
+Rulebook                            :    1 objects
+
+SPATIAL DISTRIBUTION (GAME ZONES)
+--------------------------------------------------------------------------------
+Center Play Area               :  115 objects
+Left Player Area               :   83 objects
+Left Side                      :   57 objects
+Right Player Area              :   44 objects
+Top Player Area                :   42 objects
+Right Side                     :   41 objects
+Bottom Player Area             :   34 objects
+
+DISTRIBUTION BY COLOR
+--------------------------------------------------------------------------------
+No color-coded objects found.
+
+================================================================================
+DETAILED CATEGORIZATION BY FUNCTIONAL PURPOSE
+================================================================================
+
+--------------------------------------------------------------------------------
+CARDS (IN DECK)
+Count: 132 objects
+--------------------------------------------------------------------------------
+Nested objects: 132
+
+  In Deck: 132 objects
+    [ee682d] Card: (no nickname)
+    [8fffae] Card: (no nickname)
+    [27a2d9] Card: (no nickname)
+    [3a9a8c] Card: (no nickname)
+    [22d334] Card: (no nickname)
+    [64583b] Card: (no nickname)
+    [5228ba] Card: (no nickname)
+    [2e245f] Card: (no nickname)
+    [6d15cf] Card: (no nickname)
+    [fd2119] Card: (no nickname)
+    ... and 122 more
+
+--------------------------------------------------------------------------------
+DICE
+Count: 66 objects
+--------------------------------------------------------------------------------
+
+Top-level objects: 66
+  [182b60] Custom_Dice
+    Position: (-30.7, 1.9, -10.0)
+    Zone: Left Player Area
+
+  [832934] Custom_Dice
+    Position: (-29.9, 1.9, -10.0)
+    Zone: Left Side
+
+  [96bfca] Custom_Dice
+    Position: (-41.1, 1.9, 9.2)
+    Zone: Left Player Area
+
+  [41c9a4] Custom_Dice
+    Position: (-41.1, 1.9, 10.0)
+    Zone: Left Player Area
+
+  [e414e6] Custom_Dice
+    Position: (-13.0, 1.8, 9.2)
+    Zone: Left Side
+
+  [8da25f] Custom_Dice
+    Position: (-12.2, 1.8, 9.2)
+    Zone: Left Side
+
+  [4f7a48] Custom_Dice
+    Position: (29.9, 1.8, 9.7)
+    Zone: Right Side
+
+  [0ecc38] Custom_Dice
+    Position: (30.7, 1.8, 9.7)
+    Zone: Right Player Area
+
+  [19ac8d] Custom_Dice
+    Position: (41.3, 1.8, -9.2)
+    Zone: Right Player Area
+
+  [423a3d] Custom_Dice
+    Position: (41.3, 1.8, -9.9)
+    Zone: Right Player Area
+
+  [98d8a7] Custom_Dice
+    Position: (11.8, 1.8, -10.1)
+    Zone: Bottom Player Area
+
+  [d80385] Custom_Dice
+    Position: (11.1, 1.8, -10.1)
+    Zone: Bottom Player Area
+
+  [828965] Custom_Dice
+    Position: (-36.0, 1.8, 1.8)
+    Zone: Left Player Area
+
+  [bf24bd] Custom_Dice
+    Position: (-35.3, 1.8, 1.8)
+    Zone: Left Player Area
+
+  [c726ff] Custom_Dice
+    Position: (-34.7, 1.8, 1.8)
+    Zone: Left Player Area
+
+  [679e03] Custom_Dice
+    Position: (-36.7, 1.8, 1.8)
+    Zone: Left Player Area
+
+  [d396a8] Custom_Dice
+    Position: (-34.0, 1.8, 1.8)
+    Zone: Left Player Area
+
+  [0dded2] Custom_Dice
+    Position: (-36.7, 1.8, 2.5)
+    Zone: Left Player Area
+
+  [e5ca69] Custom_Dice
+    Position: (-36.0, 1.8, 2.5)
+    Zone: Left Player Area
+
+  [622d19] Custom_Dice
+    Position: (-35.3, 1.8, 2.5)
+    Zone: Left Player Area
+
+  [048d20] Custom_Dice
+    Position: (-34.7, 1.8, 2.5)
+    Zone: Left Player Area
+
+  [ab72f1] Custom_Dice
+    Position: (-34.0, 1.8, 2.5)
+    Zone: Left Player Area
+
+  [08edc0] Custom_Dice
+    Position: (-36.0, 1.8, 0.1)
+    Zone: Left Player Area
+
+  [0fd751] Custom_Dice
+    Position: (-35.3, 1.8, 0.1)
+    Zone: Left Player Area
+
+  [bc9761] Custom_Dice
+    Position: (-34.7, 1.8, 0.1)
+    Zone: Left Player Area
+
+  [c7bf89] Custom_Dice
+    Position: (-34.0, 1.8, 0.7)
+    Zone: Left Player Area
+
+  [2dcad3] Custom_Dice
+    Position: (-36.7, 1.8, 0.1)
+    Zone: Left Player Area
+
+  [a82815] Custom_Dice
+    Position: (-34.0, 1.8, 0.1)
+    Zone: Left Player Area
+
+  [439db8] Custom_Dice
+    Position: (-36.7, 1.8, 0.7)
+    Zone: Left Player Area
+
+  [29b946] Custom_Dice
+    Position: (-36.0, 1.8, 0.7)
+    Zone: Left Player Area
+
+  [13b412] Custom_Dice
+    Position: (-35.3, 1.8, 0.7)
+    Zone: Left Player Area
+
+  [9c4d29] Custom_Dice
+    Position: (-34.7, 1.8, 0.7)
+    Zone: Left Player Area
+
+  [8d05cb] Custom_Dice
+    Position: (-35.3, 1.8, -1.8)
+    Zone: Left Player Area
+
+  [195e9f] Custom_Dice
+    Position: (-36.6, 1.8, -1.1)
+    Zone: Left Player Area
+
+  [d65c7f] Custom_Dice
+    Position: (-36.0, 1.8, -1.1)
+    Zone: Left Player Area
+
+  [f37d81] Custom_Dice
+    Position: (-34.6, 1.8, -1.1)
+    Zone: Left Player Area
+
+  [db80bc] Custom_Dice
+    Position: (-34.6, 1.8, -1.8)
+    Zone: Left Player Area
+
+  [485f41] Custom_Dice
+    Position: (-35.3, 1.8, -1.1)
+    Zone: Left Player Area
+
+  [2e661f] Custom_Dice
+    Position: (-36.0, 1.8, -1.8)
+    Zone: Left Player Area
+
+  [c4f9d9] Custom_Dice
+    Position: (-36.6, 1.8, -1.8)
+    Zone: Left Player Area
+
+  [5a46cb] Custom_Dice
+    Position: (-31.6, 1.9, 1.4)
+    Zone: Left Player Area
+
+  [41072c] Custom_Dice
+    Position: (-30.7, 1.9, 1.4)
+    Zone: Left Player Area
+
+  [ac1c23] Custom_Dice
+    Position: (-29.8, 1.9, 1.4)
+    Zone: Left Side
+
+  [c98a51] Custom_Dice
+    Position: (-32.6, 1.9, 1.4)
+    Zone: Left Player Area
+
+  [916df0] Custom_Dice
+    Position: (-29.8, 1.9, 2.3)
+    Zone: Left Side
+
+  [98e2e8] Custom_Dice
+    Position: (-32.6, 1.9, 2.3)
+    Zone: Left Player Area
+
+  [8daf34] Custom_Dice
+    Position: (-31.6, 1.9, 2.3)
+    Zone: Left Player Area
+
+  [2e9fd0] Custom_Dice
+    Position: (-30.7, 1.9, 2.3)
+    Zone: Left Player Area
+
+  [4c9e26] Custom_Dice
+    Position: (-31.7, 1.9, -0.9)
+    Zone: Left Player Area
+
+  [cf20e5] Custom_Dice
+    Position: (-30.7, 1.9, -0.9)
+    Zone: Left Player Area
+
+  [d4bc34] Custom_Dice
+    Position: (-32.6, 1.9, -0.9)
+    Zone: Left Player Area
+
+  [4d821d] Custom_Dice
+    Position: (-30.7, 1.9, 0.0)
+    Zone: Left Player Area
+
+  [82e69a] Custom_Dice
+    Position: (-32.6, 1.9, 0.0)
+    Zone: Left Player Area
+
+  [8acd86] Custom_Dice
+    Position: (-29.8, 1.9, -0.9)
+    Zone: Left Side
+
+  [5ec89b] Custom_Dice
+    Position: (-31.7, 1.9, 0.0)
+    Zone: Left Player Area
+
+  [745e33] Custom_Dice
+    Position: (-29.8, 1.9, 0.0)
+    Zone: Left Side
+
+  [484e2d] Custom_Dice
+    Position: (-27.0, 2.1, 0.8)
+    Zone: Left Side
+
+  [5ab574] Custom_Dice
+    Position: (-28.2, 2.1, 0.8)
+    Zone: Left Side
+
+  [22a9b4] Custom_Dice
+    Position: (-25.7, 2.1, 0.8)
+    Zone: Left Side
+
+  [69ef5b] Custom_Dice
+    Position: (-28.2, 2.1, 2.1)
+    Zone: Left Side
+
+  [9ccf5e] Custom_Dice
+    Position: (-27.0, 2.1, 2.1)
+    Zone: Left Side
+
+  [4001eb] Custom_Dice
+    Position: (-25.7, 2.1, 2.1)
+    Zone: Left Side
+
+  [221e34] Custom_Dice
+    Position: (-26.9, 2.1, -2.2)
+    Zone: Left Side
+
+  [7e9e5f] Custom_Dice
+    Position: (-28.2, 2.1, -0.9)
+    Zone: Left Side
+
+  [4f725d] Custom_Dice
+    Position: (-28.2, 2.1, -2.2)
+    Zone: Left Side
+
+  [2b41e0] Custom_Dice
+    Position: (-26.9, 2.1, -0.9)
+    Zone: Left Side
+
+
+--------------------------------------------------------------------------------
+TILES/TOKENS
+Count: 52 objects
+--------------------------------------------------------------------------------
+
+Top-level objects: 22
+  [49007e] Custom_Tile
+    Position: (-0.0, 1.5, -6.0)
+    Zone: Center Play Area
+
+  [6e33ba] Custom_Tile
+    Position: (15.6, 1.5, -4.7)
+    Zone: Right Side
+
+  [da9a88] Custom_Tile
+    Position: (15.6, 1.5, -6.6)
+    Zone: Right Side
+
+  [323587] Custom_Tile
+    Position: (7.4, 1.5, -13.1)
+    Zone: Bottom Player Area
+
+  [eb87fd] Custom_Tile
+    Position: (-34.4, 1.5, -13.1)
+    Zone: Left Player Area
+
+  [295b3e] Custom_Tile
+    Position: (-44.2, 1.5, 13.7)
+    Zone: Left Player Area
+
+  [11331a] Custom_Tile
+    Position: (-8.1, 1.5, 13.0)
+    Zone: Top Player Area
+
+  [f7bfeb] Custom_Tile
+    Position: (34.4, 1.5, 12.9)
+    Zone: Right Player Area
+
+  [d45dfa] Custom_Tile
+    Position: (44.2, 1.5, -13.7)
+    Zone: Right Player Area
+
+  [e805d5] Custom_Tile
+    Position: (-21.0, 1.5, -10.0)
+    Zone: Bottom Player Area
+
+  [87c0b2] Custom_Tile
+    Position: (21.0, 1.4, -10.0)
+    Zone: Bottom Player Area
+
+  [a55763] Custom_Tile
+    Position: (41.2, 1.4, -0.6)
+    Zone: Right Player Area
+
+  [ccd824] Custom_Tile
+    Position: (21.0, 1.5, 10.0)
+    Zone: Right Side
+
+  [c510d8] Custom_Tile
+    Position: (-21.6, 1.5, 10.0)
+    Zone: Top Player Area
+
+  [7f7983] Custom_Tile
+    Position: (-41.1, 1.5, 0.6)
+    Zone: Left Player Area
+
+  [e74b37] Custom_Tile
+    Position: (2.4, -1.0, -5.4)
+    Zone: Center Play Area
+
+  [4bc7bf] Custom_Tile
+    Position: (-21.1, 1.5, -21.0)
+    Zone: Bottom Player Area
+
+  [792a51] Custom_Tile
+    Position: (-52.3, 1.6, 0.1)
+    Zone: Left Player Area
+
+  [697f1c] Custom_Tile
+    Position: (-21.5, 1.5, 20.9)
+    Zone: Top Player Area
+
+  [6f4623] Custom_Tile
+    Position: (21.1, 1.5, 20.9)
+    Zone: Top Player Area
+
+  [6fc0cc] Custom_Tile
+    Position: (52.3, 1.4, -0.1)
+    Zone: Right Player Area
+
+  [ea7323] Custom_Tile
+    Position: (20.8, 1.4, -21.1)
+    Zone: Bottom Player Area
+
+Nested objects: 30
+
+  In Infinite_Bag: 30 objects
+    [510c67] Custom_Tile: (no nickname)
+    [2d371c] Custom_Tile: (no nickname)
+    [1f8d82] Custom_Tile: (no nickname)
+    [d2067b] Custom_Tile: (no nickname)
+    [485f59] Custom_Tile: (no nickname)
+    [2d371c] Custom_Tile: (no nickname)
+    [1f8d82] Custom_Tile: (no nickname)
+    [d2067b] Custom_Tile: (no nickname)
+    [485f59] Custom_Tile: (no nickname)
+    [510c67] Custom_Tile: (no nickname)
+    ... and 20 more
+
+--------------------------------------------------------------------------------
+CARDS (ON TABLE)
+Count: 36 objects
+--------------------------------------------------------------------------------
+
+Top-level objects: 36
+  [ca9882] CardCustom
+    Position: (-15.0, 1.5, -10.9)
+    Zone: Bottom Player Area
+
+  [c55154] CardCustom
+    Position: (-24.3, 1.5, -12.0)
+    Zone: Bottom Player Area
+
+  [bb0333] CardCustom
+    Position: (-26.3, 1.5, -12.0)
+    Zone: Bottom Player Area
+
+  [d78d2f] CardCustom
+    Position: (-28.3, 1.5, -12.0)
+    Zone: Bottom Player Area
+
+  [d7d4e1] CardCustom
+    Position: (-30.3, 1.5, -12.0)
+    Zone: Left Player Area
+
+  [4423ca] CardCustom
+    Position: (-43.2, 1.6, 0.6)
+    Zone: Left Player Area
+
+  [e66e1a] CardCustom
+    Position: (-21.0, 1.5, -12.0)
+    Zone: Bottom Player Area
+
+  [65a719] CardCustom
+    Position: (20.9, 1.5, -12.0)
+    Zone: Bottom Player Area
+
+  [e55c7c] CardCustom
+    Position: (21.0, 1.5, 12.0)
+    Zone: Top Player Area
+
+  [c893a2] CardCustom
+    Position: (-21.6, 1.5, 12.0)
+    Zone: Top Player Area
+
+  [55a3f7] CardCustom
+    Position: (26.6, 1.5, -10.6)
+    Zone: Bottom Player Area
+
+  [494bbb] CardCustom
+    Position: (43.2, 1.4, -0.6)
+    Zone: Right Player Area
+
+  [f84321] CardCustom
+    Position: (-27.3, 1.5, 10.6)
+    Zone: Top Player Area
+
+  [dda4c0] CardCustom
+    Position: (15.3, 1.5, 10.6)
+    Zone: Top Player Area
+
+  [e7162e] CardCustom
+    Position: (41.9, 1.4, 5.6)
+    Zone: Right Player Area
+
+  [d1be50] CardCustom
+    Position: (-41.9, 1.6, -5.6)
+    Zone: Left Player Area
+
+  [6840ed] CardCustom
+    Position: (-43.3, 1.6, 3.5)
+    Zone: Left Player Area
+
+  [0fdeeb] CardCustom
+    Position: (-43.3, 1.6, 5.5)
+    Zone: Left Player Area
+
+  [ee4449] CardCustom
+    Position: (-43.3, 1.6, 7.5)
+    Zone: Left Player Area
+
+  [bfc8fc] CardCustom
+    Position: (-43.3, 1.6, 9.5)
+    Zone: Left Player Area
+
+  [aa8d67] CardCustom
+    Position: (-18.1, 1.5, 12.1)
+    Zone: Top Player Area
+
+  [615e05] CardCustom
+    Position: (-16.1, 1.5, 12.1)
+    Zone: Top Player Area
+
+  [266894] CardCustom
+    Position: (-14.1, 1.5, 12.1)
+    Zone: Top Player Area
+
+  [7ac402] CardCustom
+    Position: (-12.2, 1.5, 12.1)
+    Zone: Top Player Area
+
+  [f1baff] CardCustom
+    Position: (24.4, 1.5, 11.9)
+    Zone: Top Player Area
+
+  [d50a17] CardCustom
+    Position: (26.4, 1.5, 11.9)
+    Zone: Top Player Area
+
+  [da1866] CardCustom
+    Position: (28.4, 1.5, 11.9)
+    Zone: Top Player Area
+
+  [8ab768] CardCustom
+    Position: (30.4, 1.5, 11.9)
+    Zone: Right Player Area
+
+  [5d07b4] CardCustom
+    Position: (17.5, 1.5, -12.2)
+    Zone: Bottom Player Area
+
+  [42628c] CardCustom
+    Position: (15.5, 1.5, -12.2)
+    Zone: Bottom Player Area
+
+  [3c7651] CardCustom
+    Position: (13.5, 1.5, -12.2)
+    Zone: Bottom Player Area
+
+  [29a25e] CardCustom
+    Position: (11.5, 1.5, -12.2)
+    Zone: Bottom Player Area
+
+  [01e850] CardCustom
+    Position: (43.4, 1.4, -3.7)
+    Zone: Right Player Area
+
+  [51e5a0] CardCustom
+    Position: (43.4, 1.4, -5.7)
+    Zone: Right Player Area
+
+  [df1090] CardCustom
+    Position: (43.4, 1.4, -7.7)
+    Zone: Right Player Area
+
+  [cd165d] CardCustom
+    Position: (43.4, 1.4, -9.7)
+    Zone: Right Player Area
+
+
+--------------------------------------------------------------------------------
+TOKEN SOURCES (INFINITE BAGS)
+Count: 30 objects
+--------------------------------------------------------------------------------
+
+Top-level objects: 30
+  [6d13f3] Infinite_Bag
+    Position: (-10.6, 1.5, -12.9)
+    Zone: Bottom Player Area
+
+  [a8dd7a] Infinite_Bag
+    Position: (-9.3, 1.5, -12.9)
+    Zone: Bottom Player Area
+
+  [c369d5] Infinite_Bag
+    Position: (-8.0, 1.5, -12.9)
+    Zone: Bottom Player Area
+
+  [e9f4da] Infinite_Bag
+    Position: (-6.6, 1.5, -12.9)
+    Zone: Bottom Player Area
+
+  [e4c6b0] Infinite_Bag
+    Position: (-5.3, 1.5, -12.9)
+    Zone: Bottom Player Area
+
+  [4359df] Infinite_Bag
+    Position: (32.6, 1.4, -12.9)
+    Zone: Right Player Area
+
+  [7e273f] Infinite_Bag
+    Position: (33.9, 1.4, -12.9)
+    Zone: Right Player Area
+
+  [b385c9] Infinite_Bag
+    Position: (35.2, 1.4, -12.9)
+    Zone: Right Player Area
+
+  [3bd399] Infinite_Bag
+    Position: (36.6, 1.4, -12.9)
+    Zone: Right Player Area
+
+  [fb479a] Infinite_Bag
+    Position: (31.3, 1.4, -12.9)
+    Zone: Right Player Area
+
+  [21e2e1] Infinite_Bag
+    Position: (-33.3, 1.5, 12.9)
+    Zone: Left Player Area
+
+  [903853] Infinite_Bag
+    Position: (-34.6, 1.5, 12.9)
+    Zone: Left Player Area
+
+  [4455cc] Infinite_Bag
+    Position: (-35.9, 1.5, 12.9)
+    Zone: Left Player Area
+
+  [196e86] Infinite_Bag
+    Position: (-37.2, 1.5, 12.9)
+    Zone: Left Player Area
+
+  [ebfc29] Infinite_Bag
+    Position: (-31.9, 1.5, 12.9)
+    Zone: Left Player Area
+
+  [3b4a3e] Infinite_Bag
+    Position: (5.3, 1.5, 12.9)
+    Zone: Top Player Area
+
+  [f33f1d] Infinite_Bag
+    Position: (8.0, 1.5, 12.9)
+    Zone: Top Player Area
+
+  [e5d7bc] Infinite_Bag
+    Position: (6.7, 1.5, 12.9)
+    Zone: Top Player Area
+
+  [6bab7c] Infinite_Bag
+    Position: (9.3, 1.5, 12.9)
+    Zone: Top Player Area
+
+  [5fc55a] Infinite_Bag
+    Position: (10.6, 1.5, 12.9)
+    Zone: Top Player Area
+
+  [1ce43a] Infinite_Bag
+    Position: (-44.2, 1.5, -10.3)
+    Zone: Left Player Area
+
+  [5349e7] Infinite_Bag
+    Position: (-44.2, 1.5, -11.6)
+    Zone: Left Player Area
+
+  [e9b9d3] Infinite_Bag
+    Position: (-44.2, 1.5, -13.1)
+    Zone: Left Player Area
+
+  [b10f9f] Infinite_Bag
+    Position: (-44.2, 1.5, -14.4)
+    Zone: Left Player Area
+
+  [ad38b5] Infinite_Bag
+    Position: (-44.2, 1.5, -16.0)
+    Zone: Left Player Area
+
+  [81a4ed] Infinite_Bag
+    Position: (44.2, 1.4, 11.8)
+    Zone: Right Player Area
+
+  [25e667] Infinite_Bag
+    Position: (44.2, 1.4, 13.3)
+    Zone: Right Player Area
+
+  [f7055c] Infinite_Bag
+    Position: (44.2, 1.4, 14.8)
+    Zone: Right Player Area
+
+  [ae588d] Infinite_Bag
+    Position: (44.2, 1.4, 16.1)
+    Zone: Right Player Area
+
+  [7034c5] Infinite_Bag
+    Position: (44.2, 1.4, 10.3)
+    Zone: Right Player Area
+
+
+--------------------------------------------------------------------------------
+GAME AUTOMATION/SCRIPTING
+Count: 26 objects
+--------------------------------------------------------------------------------
+
+Top-level objects: 26
+  [67fe47] ScriptingTrigger
+    Position: (-5.1, 2.0, 1.7)
+    Zone: Center Play Area
+
+  [d216b3] ScriptingTrigger
+    Position: (-2.5, 2.0, 1.7)
+    Zone: Center Play Area
+
+  [47fc40] ScriptingTrigger
+    Position: (2.5, 2.0, 1.7)
+    Zone: Center Play Area
+
+  [7eade1] ScriptingTrigger
+    Position: (-5.1, 2.0, -1.9)
+    Zone: Center Play Area
+
+  [db96f9] ScriptingTrigger
+    Position: (0.0, 2.0, 1.7)
+    Zone: Center Play Area
+
+  [2e5536] ScriptingTrigger
+    Position: (-2.6, 2.0, -1.9)
+    Zone: Center Play Area
+
+  [64ea93] ScriptingTrigger
+    Position: (-0.0, 2.0, -1.9)
+    Zone: Center Play Area
+
+  [a4e767] ScriptingTrigger
+    Position: (2.6, 2.0, -1.9)
+    Zone: Center Play Area
+
+  [fc354e] ScriptingTrigger
+    Position: (5.1, 2.0, -1.9)
+    Zone: Center Play Area
+
+  [bf5f51] ScriptingTrigger
+    Position: (7.7, 2.0, -1.9)
+    Zone: Center Play Area
+
+  [d31ed0] ScriptingTrigger
+    Position: (5.1, 2.0, 1.7)
+    Zone: Center Play Area
+
+  [22b0ef] ScriptingTrigger
+    Position: (7.7, 2.0, 1.7)
+    Zone: Center Play Area
+
+  [e34b0a] ScriptingTrigger
+    Position: (-7.7, 2.0, 1.7)
+    Zone: Center Play Area
+
+  [5526fc] ScriptingTrigger
+    Position: (-7.7, 2.0, -1.9)
+    Zone: Center Play Area
+
+  [0721f0] ScriptingTrigger
+    Position: (-32.1, 1.0, -17.0)
+    Zone: Left Player Area
+
+  [7d2423] ScriptingTrigger
+    Position: (9.8, 1.0, -17.0)
+    Zone: Bottom Player Area
+
+  [fe77b3] ScriptingTrigger
+    Position: (48.2, 1.0, -11.4)
+    Zone: Right Player Area
+
+  [7a5240] ScriptingTrigger
+    Position: (32.1, 1.0, 17.0)
+    Zone: Right Player Area
+
+  [c8f797] ScriptingTrigger
+    Position: (-10.4, 1.0, 17.0)
+    Zone: Top Player Area
+
+  [6e5bd7] ScriptingTrigger
+    Position: (-48.2, 1.0, 11.4)
+    Zone: Left Player Area
+
+  [eff11e] ScriptingTrigger
+    Position: (-21.1, 2.0, -17.2)
+    Zone: Bottom Player Area
+
+  [bba2ff] ScriptingTrigger
+    Position: (20.8, 2.0, -17.3)
+    Zone: Bottom Player Area
+
+  [26324e] ScriptingTrigger
+    Position: (48.5, 2.0, -0.1)
+    Zone: Right Player Area
+
+  [540961] ScriptingTrigger
+    Position: (21.1, 2.0, 17.1)
+    Zone: Top Player Area
+
+  [fb52df] ScriptingTrigger
+    Position: (-21.5, 2.0, 17.1)
+    Zone: Top Player Area
+
+  [6befed] ScriptingTrigger
+    Position: (-48.5, 2.0, 0.1)
+    Zone: Left Player Area
+
+
+--------------------------------------------------------------------------------
+SCRATCH OFF CARDS
+Count: 25 objects
+--------------------------------------------------------------------------------
+Nested objects: 25
+
+  In Custom_Model_Bag [Scratch Off Cards]: 25 objects
+    [b20758] CardCustom: (no nickname)
+    [aec481] CardCustom: (no nickname)
+    [bea8f3] CardCustom: (no nickname)
+    [aec481] CardCustom: (no nickname)
+    [1d391b] CardCustom: (no nickname)
+    [b20758] CardCustom: (no nickname)
+    [b20758] CardCustom: (no nickname)
+    [bea8f3] CardCustom: (no nickname)
+    [b20758] CardCustom: (no nickname)
+    [1d391b] CardCustom: (no nickname)
+    ... and 15 more
+
+--------------------------------------------------------------------------------
+CARGO SHEETS
+Count: 12 objects
+--------------------------------------------------------------------------------
+Nested objects: 12
+
+  In Custom_Model_Bag [Cargo Sheets]: 12 objects
+    [3fd83f] Custom_Board: (no nickname)
+    [7a1b5f] Custom_Board: (no nickname)
+    [2a5bf7] Custom_Board: (no nickname)
+    [42db5b] Custom_Board: (no nickname)
+    [e067db] Custom_Board: (no nickname)
+    [bac79e] Custom_Board: (no nickname)
+    [bac79e] Custom_Board: (no nickname)
+    [a8b16f] Custom_Board: (no nickname)
+    [1cffb3] Custom_Board: (no nickname)
+    [bac79e] Custom_Board: (no nickname)
+    ... and 2 more
+
+--------------------------------------------------------------------------------
+CARD DECKS
+Count: 11 objects
+--------------------------------------------------------------------------------
+
+Top-level objects: 11
+  [ca9c08] Deck
+    Position: (-5.1, 2.0, 1.7)
+    Zone: Center Play Area
+
+  [c53e86] Deck
+    Position: (-5.1, 1.8, -1.9)
+    Zone: Center Play Area
+
+  [3d8e04] Deck
+    Position: (2.6, 1.8, 1.7)
+    Zone: Center Play Area
+
+  [337130] Deck
+    Position: (0.0, 1.8, 1.7)
+    Zone: Center Play Area
+
+  [22cf98] Deck
+    Position: (-2.6, 1.8, 1.7)
+    Zone: Center Play Area
+
+  [706d8b] Deck
+    Position: (13.2, 1.5, -0.9)
+    Zone: Right Side
+
+  [8a568a] Deck
+    Position: (13.2, 1.5, 2.5)
+    Zone: Right Side
+
+  [d12c23] Deck
+    Position: (15.6, 1.5, 2.5)
+    Zone: Right Side
+
+  [31414d] Deck
+    Position: (15.6, 1.5, -0.9)
+    Zone: Right Side
+
+  [20446d] Deck
+    Position: (18.0, 1.5, 2.5)
+    Zone: Right Side
+
+  [8a6e4c] Deck
+    Position: (18.0, 1.5, -0.9)
+    Zone: Right Side
+
+
+--------------------------------------------------------------------------------
+3D DECORATIVE ASSETS
+Count: 8 objects
+--------------------------------------------------------------------------------
+
+Top-level objects: 8
+  [afc863] Custom_Assetbundle
+    Position: (-40.5, -9.0, -9.0)
+    Zone: Left Player Area
+
+  [c8edca] Custom_Assetbundle
+    Position: (-40.5, -9.0, 9.0)
+    Zone: Left Player Area
+
+  [393bf7] Custom_Assetbundle
+    Position: (40.5, -9.0, 9.0)
+    Zone: Right Player Area
+
+  [12c65e] Custom_Assetbundle
+    Position: (40.5, -9.0, -9.0)
+    Zone: Right Player Area
+
+  [f938a2] Custom_Assetbundle
+    Position: (0.0, -9.0, -9.0)
+    Zone: Center Play Area
+
+  [9f95fd] Custom_Assetbundle
+    Position: (-40.5, -9.0, 0.0)
+    Zone: Left Player Area
+
+  [35b95f] Custom_Assetbundle
+    Position: (0.0, -9.0, 9.0)
+    Zone: Center Play Area
+
+  [5af8f2] Custom_Assetbundle
+    Position: (40.5, -9.0, 0.0)
+    Zone: Right Player Area
+
+
+--------------------------------------------------------------------------------
+PLAYER BOARDS
+Count: 7 objects
+--------------------------------------------------------------------------------
+
+Top-level objects: 7
+  [9d3022] Custom_Board
+    Position: (-30.3, 1.5, -19.3)
+    Zone: Left Player Area
+
+  [fdb2f4] Custom_Board
+    Position: (11.6, 1.5, -19.3)
+    Zone: Bottom Player Area
+
+  [0d9d6a] Custom_Board
+    Position: (-12.3, 1.5, 19.3)
+    Zone: Top Player Area
+
+  [72a245] Custom_Board
+    Position: (30.3, 1.5, 19.3)
+    Zone: Right Player Area
+
+  [ddde25] Custom_Board
+    Position: (50.5, 1.4, -9.5)
+    Zone: Right Player Area
+
+  [cafc34] Custom_Board
+    Position: (-50.5, 1.6, 9.5)
+    Zone: Left Player Area
+
+  [b5b8e2] Custom_Board
+    Position: (0.0, 1.5, 0.0)
+    Zone: Center Play Area
+
+
+--------------------------------------------------------------------------------
+HAND ZONES
+Count: 6 objects
+--------------------------------------------------------------------------------
+
+Top-level objects: 6
+  [22eea3] HandTrigger
+    Position: (-60.8, 5.0, -0.0)
+    Zone: Left Player Area
+
+  [24c27a] HandTrigger
+    Position: (-21.0, 5.0, -29.1)
+    Zone: Bottom Player Area
+
+  [d5d25d] HandTrigger
+    Position: (20.9, 5.0, -29.0)
+    Zone: Bottom Player Area
+
+  [615a85] HandTrigger
+    Position: (60.4, 5.0, 0.3)
+    Zone: Right Player Area
+
+  [c996d3] HandTrigger
+    Position: (21.1, 5.0, 29.0)
+    Zone: Top Player Area
+
+  [50e547] HandTrigger
+    Position: (-20.9, 5.0, 29.0)
+    Zone: Top Player Area
+
+
+--------------------------------------------------------------------------------
+STORAGE BAGS
+Count: 2 objects
+--------------------------------------------------------------------------------
+
+Top-level objects: 2
+  [04da1d] Custom_Model_Bag
+    Name: Cargo Sheets
+    Position: (-14.4, 1.7, 2.2)
+    Zone: Left Side
+
+  [cc1905] Custom_Model_Bag
+    Name: Scratch Off Cards
+    Position: (-14.5, 1.6, -2.5)
+    Zone: Left Side
+
+
+--------------------------------------------------------------------------------
+SPECIAL GAME PIECES
+Count: 1 objects
+--------------------------------------------------------------------------------
+
+Top-level objects: 1
+  [bd69bd] Chinese_Checkers_Piece
+    Name: Flex Table Control
+    Position: (59.7, -0.3, -31.1)
+    Zone: Right Player Area
+
+
+--------------------------------------------------------------------------------
+3D MODELS
+Count: 1 objects
+--------------------------------------------------------------------------------
+
+Top-level objects: 1
+  [4ee1f2] Custom_Model
+    Position: (0.0, -9.0, 0.0)
+    Zone: Center Play Area
+
+
+--------------------------------------------------------------------------------
+RULEBOOK
+Count: 1 objects
+--------------------------------------------------------------------------------
+
+Top-level objects: 1
+  [19eddc] Custom_PDF
+    Position: (25.1, 1.4, 0.1)
+    Zone: Right Side
+
+
+================================================================================
+OBJECT TYPE REFERENCE
+================================================================================
+
+--------------------------------------------------------------------------------
+Card: 132 total
+  132 nested instances (in decks/bags)
+  Example: GUID ee682d
+    Position: (-1.5, 1.6, 6.7)
+
+--------------------------------------------------------------------------------
+Custom_Dice: 66 total
+  66 top-level instances
+  Example: GUID 182b60
+    Position: (-30.7, 1.9, -10.0)
+
+--------------------------------------------------------------------------------
+CardCustom: 61 total
+  36 top-level instances
+  25 nested instances (in decks/bags)
+  Example: GUID ca9882
+    Position: (-15.0, 1.5, -10.9)
+
+--------------------------------------------------------------------------------
+Custom_Tile: 52 total
+  22 top-level instances
+  30 nested instances (in decks/bags)
+  Example: GUID 510c67
+    Position: (-10.6, 2.9, -13.0)
+
+--------------------------------------------------------------------------------
+Infinite_Bag: 30 total
+  30 top-level instances
+  Example: GUID 6d13f3
+    Position: (-10.6, 1.5, -12.9)
+
+--------------------------------------------------------------------------------
+ScriptingTrigger: 26 total
+  26 top-level instances
+  Example: GUID 67fe47
+    Position: (-5.1, 2.0, 1.7)
+
+--------------------------------------------------------------------------------
+Custom_Board: 19 total
+  7 top-level instances
+  12 nested instances (in decks/bags)
+  Example: GUID 9d3022
+    Position: (-30.3, 1.5, -19.3)
+
+--------------------------------------------------------------------------------
+Deck: 11 total
+  11 top-level instances
+  Example: GUID ca9c08
+    Position: (-5.1, 2.0, 1.7)
+
+--------------------------------------------------------------------------------
+Custom_Assetbundle: 8 total
+  8 top-level instances
+  Example: GUID afc863
+    Position: (-40.5, -9.0, -9.0)
+
+--------------------------------------------------------------------------------
+HandTrigger: 6 total
+  6 top-level instances
+  Example: GUID 22eea3
+    Position: (-60.8, 5.0, -0.0)
+
+--------------------------------------------------------------------------------
+Custom_Model_Bag: 2 total
+  2 top-level instances
+  Example: GUID 04da1d
+    Name: Cargo Sheets
+    Position: (-14.4, 1.7, 2.2)
+
+--------------------------------------------------------------------------------
+Chinese_Checkers_Piece: 1 total
+  1 top-level instances
+  Example: GUID bd69bd
+    Name: Flex Table Control
+    Position: (59.7, -0.3, -31.1)
+
+--------------------------------------------------------------------------------
+Custom_Model: 1 total
+  1 top-level instances
+  Example: GUID 4ee1f2
+    Position: (0.0, -9.0, 0.0)
+
+--------------------------------------------------------------------------------
+Custom_PDF: 1 total
+  1 top-level instances
+  Example: GUID 19eddc
+    Position: (25.1, 1.4, 0.1)

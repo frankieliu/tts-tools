@@ -1,0 +1,219 @@
+================================================================================
+TABLETOP SIMULATOR ANALYSIS - EXECUTIVE SUMMARY
+Game: TEND
+Date: January 30, 2025
+================================================================================
+
+OVERVIEW
+------------------------------------------------------------------------
+The Tabletop Simulator save file for "Tend" contains a total of 416 game
+objects, consisting of 217 top-level objects and 199 nested objects
+(items stored within decks, bags, and containers).
+
+Game Details:
+- Name: Tend
+- Complexity: Medium
+- Players: 1-6 players
+- File Size: 3.1 MB (103,431 lines)
+- Object Types: 14 distinct types
+- Functional Categories: 16 categories
+
+
+KEY STATISTICS
+------------------------------------------------------------------------
+
+Objects by Type (Top 10):
+1. Card (132 objects) - All nested in decks
+2. Custom_Dice (66 objects) - All on table
+3. CardCustom (61 objects) - 36 on table, 25 in bags
+4. Custom_Tile (52 objects) - 22 on table, 30 in bags
+5. Infinite_Bag (30 objects) - Token sources
+6. ScriptingTrigger (26 objects) - Game automation
+7. Custom_Board (19 objects) - 7 on table, 12 in bags
+8. Deck (11 objects) - Card decks
+9. Custom_Assetbundle (8 objects) - 3D decorative elements
+10. HandTrigger (6 objects) - Player hand zones
+
+
+Objects by Functional Purpose:
+1. Cards (in deck) - 132 objects
+2. Dice - 66 objects
+3. Tiles/Tokens - 52 objects
+4. Cards (on table) - 36 objects
+5. Token Sources (Infinite Bags) - 30 objects
+6. Game Automation/Scripting - 26 objects
+7. Scratch Off Cards - 25 objects
+8. Cargo Sheets - 12 objects
+9. Card Decks - 11 objects
+10. 3D Decorative Assets - 8 objects
+11. Player Boards - 7 objects
+12. Hand Zones - 6 objects
+13. Storage Bags - 2 objects
+14. Special Game Pieces - 1 object
+15. 3D Models - 1 object
+16. Rulebook - 1 object (PDF)
+
+
+Spatial Distribution:
+- Center Play Area: 115 objects (27.6%)
+- Left Player Area: 83 objects (20.0%)
+- Left Side: 57 objects (13.7%)
+- Right Player Area: 44 objects (10.6%)
+- Top Player Area: 42 objects (10.1%)
+- Right Side: 41 objects (9.9%)
+- Bottom Player Area: 34 objects (8.2%)
+
+
+GAME COMPONENT BREAKDOWN
+------------------------------------------------------------------------
+
+PLAYER COMPONENTS (Per Player):
+- Player Boards: 7 total (6 player boards + 1 central board)
+  - Positioned at each player station and center
+- Hand Zones: 6 (one per player)
+- Dice Sets: 66 dice distributed across player areas
+- Token Sources: 30 Infinite Bags for various game tokens
+
+CARD SYSTEM:
+- Total Cards: 193 (132 in decks + 61 custom cards)
+- Card Decks: 11 separate decks
+- Scratch Off Cards: 25 cards in storage bag
+- Cards on Table: 36 placed cards
+- Storage: 2 bags (Cargo Sheets, Scratch Off Cards)
+
+CARGO SYSTEM:
+- Cargo Sheets: 12 boards stored in bag
+- Purpose: Likely player-specific cargo/shipment tracking
+
+TOKENS AND TILES:
+- Tiles/Tokens: 52 total
+  - 22 placed on table
+  - 30 stored in Infinite Bags
+- Infinite Bags: 30 (token generation sources)
+  - Distributed around player areas
+  - Likely for different resource types
+
+GAME AUTOMATION:
+- Scripting Triggers: 26 automated zones
+- Purpose: Handle game logic, turn phases, scoring
+- Locations: Strategic positions around play area
+
+VISUAL ELEMENTS:
+- 3D Decorative Assets: 8 asset bundles
+- 3D Models: 1 custom model
+- Purpose: Visual enhancement and theme
+
+REFERENCE MATERIALS:
+- Rulebook: 1 PDF object
+- Location: Right side of table
+
+
+GAME STRUCTURE INSIGHTS
+------------------------------------------------------------------------
+
+PLAYER SETUP:
+The game supports 1-6 players with dedicated areas for each:
+- 6 player stations (Left, Right, Top, Bottom, and 2 corners)
+- Each station has: Hand Zone, Player Board area
+- Dice are distributed to player areas
+- Token sources (Infinite Bags) positioned near each station
+
+CENTRAL PLAY AREA:
+- Contains 115 objects (largest concentration)
+- Main game board at center (0,0,0)
+- Card decks positioned centrally
+- Multiple scripting triggers for game automation
+
+GAME MECHANISMS (Inferred):
+Based on component types and quantities:
+1. Dice Rolling: 66 dice suggest heavy dice usage
+2. Card Management: 11 decks indicate card drafting/drawing
+3. Cargo/Delivery: Cargo sheets suggest pickup/delivery theme
+4. Resource Management: Multiple token types via Infinite Bags
+5. Scratch-Off Elements: 25 scratch-off cards for reveals/surprises
+6. Tile Placement: 52 tiles suggest placement/building elements
+
+
+TECHNICAL DETAILS
+------------------------------------------------------------------------
+
+OBJECT TYPES PRESENT:
+1. Card - Standard game cards in decks
+2. CardCustom - Custom-designed cards
+3. Custom_Board - Player boards and cargo sheets
+4. Custom_Dice - Custom dice with special faces
+5. Custom_Tile - Game tiles and tokens
+6. Infinite_Bag - Unlimited token sources
+7. Deck - Card deck containers
+8. Custom_Model_Bag - Storage bags for components
+9. ScriptingTrigger - Automation zones
+10. HandTrigger - Player hand zones
+11. Custom_Assetbundle - 3D visual elements
+12. Custom_PDF - Rulebook
+13. Custom_Model - 3D model objects
+14. Chinese_Checkers_Piece - Special control piece
+
+AUTOMATION LEVEL:
+- High automation with 26 scripting triggers
+- Suggests automated turn sequence, scoring, or card dealing
+- Hand zones for automatic card management
+
+
+COLOR CODING:
+- No color-coded player components detected in object names
+- Players may be distinguished by position rather than color
+
+
+STORAGE AND ORGANIZATION
+------------------------------------------------------------------------
+
+CONTAINERS:
+1. Custom_Model_Bag "Cargo Sheets" - Contains 12 cargo boards
+2. Custom_Model_Bag "Scratch Off Cards" - Contains 25 cards
+3. Infinite_Bags (30) - Token generation (contained tokens)
+4. Decks (11) - Card storage, ~12-36 cards each
+
+LARGEST DECK:
+- 36-card deck at center (-5.1, 2.0, 1.7)
+
+POSITION LOCKING:
+- Various objects locked to prevent accidental movement
+- Includes boards, bags, and structural elements
+
+
+CONCLUSION
+------------------------------------------------------------------------
+
+"Tend" is a medium-complexity board game for 1-6 players featuring:
+- Heavy dice usage (66 dice)
+- Significant card play (193 total cards)
+- Cargo/delivery theme with tracking sheets
+- Token management with multiple resource types
+- Scratch-off reveal mechanics
+- Tile placement elements
+- High automation for smoother gameplay
+- Clear player area organization
+- Central shared play space
+
+The game appears to blend multiple mechanisms including dice rolling,
+card drafting, resource management, and pickup-and-delivery, all
+supported by extensive automation scripting for a smooth digital
+experience.
+
+
+================================================================================
+DETAILED REPORT
+================----------------------------------------------------------------
+For complete object-by-object analysis with GUIDs, positions, and full
+categorization, see: tts_analysis_report.txt (1,195 lines)
+
+Analysis Tools Used:
+- Python 3 JSON parser
+- Custom categorization engine
+- Spatial distribution analyzer
+- Component relationship mapper
+
+Total Processing Time: < 1 minute
+Objects Analyzed: 416/416 (100%)
+Categorization Accuracy: High (based on object types and properties)
+================================================================================

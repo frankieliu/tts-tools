@@ -1,0 +1,60 @@
+#!/bin/bash
+# tts-download - Download Steam Workshop items
+# Part of tts-tools unified workflow
+
+set -e
+
+SCRIPT_DIR="$HOME/Library/CloudStorage/Box-Box/Work/bg/tts-tools"
+
+# Show help
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [[ -z "$1" ]]; then
+    cat << EOF
+Usage: tts-download <url_or_id> [options]
+
+Download Steam Workshop items (TTS mods) including .tts file, metadata, and preview image.
+
+Arguments:
+  url_or_id                Steam Workshop URL or item ID
+
+Options:
+  -o, --output-dir DIR     Output directory (default: current directory)
+  -h, --help              Show this help message
+
+Examples:
+  tts-download 3162057688
+  tts-download "https://steamcommunity.com/sharedfiles/filedetails/?id=3162057688"
+  tts-download 3162057688 -o my_downloads
+
+Output:
+  <id>_<name>.tts              # TTS save file
+  <id>_<name>.json             # Workshop metadata
+  <id>_<name>_preview.jpg      # Preview image
+EOF
+    exit 0
+fi
+
+# Convert relative output path to absolute before changing directory
+ORIG_DIR="$(pwd)"
+ARGS=()
+PREV_ARG=""
+
+for arg in "$@"; do
+    # Check if previous arg was -o or --output-dir
+    if [[ "$PREV_ARG" == "-o" ]] || [[ "$PREV_ARG" == "--output-dir" ]]; then
+        # This is the output path, convert to absolute if relative
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    else
+        # Not an output path, pass as-is
+        ARGS+=("$arg")
+        PREV_ARG="$arg"
+    fi
+done
+
+# Run with uv
+cd "$SCRIPT_DIR"
+uv run src/steam_workshop_downloader.py "${ARGS[@]}"

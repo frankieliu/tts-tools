@@ -1,0 +1,8 @@
+#!/bin/bash
+# tts-generate-tiles-pdf - Generate PDF from tiles and boards
+# Part of tts-tools unified workflow
+
+SCRIPT_DIR="$HOME/Library/CloudStorage/Box-Box/Work/bg/tts-tools"
+
+cd "$SCRIPT_DIR"
+uv run src/generate_tiles_pdf.py "$@"

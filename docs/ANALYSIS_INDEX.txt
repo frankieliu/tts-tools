@@ -1,0 +1,259 @@
+================================================================================
+TABLETOP SIMULATOR OBJECT ANALYSIS - COMPLETE INDEX
+Game: TEND
+Analysis Date: January 29, 2026
+================================================================================
+
+ANALYSIS OVERVIEW
+--------------------------------------------------------------------------------
+This analysis examined the complete Tabletop Simulator save file for the game
+"Tend" and catalogued all 416 objects, categorizing them by type, functional
+purpose, and spatial distribution.
+
+Source File: 3356045383.json
+File Size: 3.1 MB (103,431 lines)
+Objects Analyzed: 416 (217 top-level + 199 nested)
+
+
+FILES GENERATED
+--------------------------------------------------------------------------------
+
+1. tts_analysis_summary.txt (7.2 KB)
+   Executive summary with key statistics, game structure insights, and
+   component breakdown. Provides a high-level overview of the game's
+   composition and inferred gameplay mechanics.
+
+   Contents:
+   - Overview and key statistics
+   - Component breakdown by category
+   - Game structure insights
+   - Player setup analysis
+   - Inferred game mechanisms
+
+2. tts_analysis_report.txt (29 KB, 1,195 lines)
+   Comprehensive detailed report listing every object with full metadata.
+
+   Contents:
+   - Summary statistics
+   - Distribution by object type
+   - Distribution by functional purpose
+   - Spatial distribution (game zones)
+   - Detailed categorization by purpose (all 416 objects)
+   - Object type reference guide
+
+   Each object entry includes:
+   - GUID (unique identifier)
+   - Object type
+   - Nickname (if any)
+   - Position coordinates (x, y, z)
+   - Game zone
+   - Parent container (for nested objects)
+   - Description (if any)
+
+3. analyze_tts_objects.py (14 KB)
+   Python analysis script used to parse the JSON and generate reports.
+   Can be rerun or modified for different analysis perspectives.
+
+4. count_objects.py (727 bytes)
+   Object counting verification script.
+
+
+QUICK REFERENCE - OBJECT COUNTS
+--------------------------------------------------------------------------------
+
+BY TYPE (14 types total):
+  Card ......................... 132 (all nested in decks)
+  Custom_Dice .................. 66
+  CardCustom ................... 61 (36 on table, 25 nested)
+  Custom_Tile .................. 52 (22 on table, 30 nested)
+  Infinite_Bag ................. 30
+  ScriptingTrigger ............. 26
+  Custom_Board ................. 19 (7 on table, 12 nested)
+  Deck ......................... 11
+  Custom_Assetbundle ........... 8
+  HandTrigger .................. 6
+  Custom_Model_Bag ............. 2
+  Chinese_Checkers_Piece ....... 1
+  Custom_Model ................. 1
+  Custom_PDF ................... 1
+
+BY FUNCTION (16 categories):
+  Cards (in deck) .............. 132
+  Dice ......................... 66
+  Tiles/Tokens ................. 52
+  Cards (on table) ............. 36
+  Token Sources ................ 30
+  Game Automation .............. 26
+  Scratch Off Cards ............ 25
+  Cargo Sheets ................. 12
+  Card Decks ................... 11
+  3D Decorative Assets ......... 8
+  Player Boards ................ 7
+  Hand Zones ................... 6
+  Storage Bags ................. 2
+  Special Game Pieces .......... 1
+  3D Models .................... 1
+  Rulebook ..................... 1
+
+BY ZONE (7 zones):
+  Center Play Area ............. 115 (27.6%)
+  Left Player Area ............. 83 (20.0%)
+  Left Side .................... 57 (13.7%)
+  Right Player Area ............ 44 (10.6%)
+  Top Player Area .............. 42 (10.1%)
+  Right Side ................... 41 (9.9%)
+  Bottom Player Area ........... 34 (8.2%)
+
+
+GAME SUMMARY
+--------------------------------------------------------------------------------
+
+"Tend" is a medium-complexity board game for 1-6 players featuring:
+- Dice rolling mechanics (66 dice)
+- Card play and management (193 total cards)
+- Cargo/delivery system (12 cargo tracking sheets)
+- Resource tokens (52 tiles/tokens with 30 infinite sources)
+- Scratch-off reveal mechanics (25 scratch-off cards)
+- Heavy automation (26 scripting triggers)
+- 7 player boards (6 players + 1 central)
+- 6 hand zones for card management
+
+
+KEY CONTAINERS
+--------------------------------------------------------------------------------
+
+Decks (11 total):
+  - 1 large deck with 36 cards at center (-5.1, 2.0, 1.7)
+  - Multiple smaller decks (8-12 cards each)
+  - Distributed around play area
+
+Storage Bags (2):
+  - "Cargo Sheets" bag: 12 Custom_Board objects
+  - "Scratch Off Cards" bag: 25 CardCustom objects
+
+Infinite Bags (30):
+  - Token generation sources
+  - Distributed to all player areas
+  - Each contains 1 Custom_Tile token template
+
+
+METHODOLOGY
+--------------------------------------------------------------------------------
+
+Analysis Process:
+1. JSON parsing of complete save file
+2. Recursive object extraction (including nested objects)
+3. Metadata extraction (GUID, type, position, properties)
+4. Categorization by multiple dimensions:
+   - Object type (TTS native types)
+   - Functional purpose (game role)
+   - Spatial zone (table position)
+   - Color association (player colors)
+5. Statistical aggregation
+6. Report generation
+
+Categorization Logic:
+- Type-based: Uses TTS object type names
+- Purpose-based: Infers function from type, nickname, and position
+- Zone-based: Calculates from X/Z coordinates
+- Color-based: Extracts from object nicknames
+
+Tools Used:
+- Python 3 with JSON library
+- Custom analysis scripts
+- Position-based spatial analysis
+- Hierarchical object traversal
+
+
+USAGE NOTES
+--------------------------------------------------------------------------------
+
+To Re-run Analysis:
+  python3 analyze_tts_objects.py
+
+To Verify Object Count:
+  python3 count_objects.py
+
+To Search Report:
+  grep "keyword" tts_analysis_report.txt
+
+To View Specific Category:
+  grep -A 20 "CATEGORY_NAME" tts_analysis_report.txt
+
+Example Searches:
+  - Find all dice: grep "Custom_Dice" tts_analysis_report.txt
+  - Find cargo items: grep -i "cargo" tts_analysis_report.txt
+  - Find center objects: grep "Center Play Area" tts_analysis_report.txt
+
+
+OBJECT GUID REFERENCE
+--------------------------------------------------------------------------------
+
+To find a specific object by GUID, search the detailed report:
+  grep "GUID_HERE" tts_analysis_report.txt
+
+Example notable GUIDs:
+  - bd69bd : Flex Table Control (special control piece)
+  - 04da1d : Cargo Sheets bag
+  - cc1905 : Scratch Off Cards bag
+  - b5b8e2 : Central board at (0, 0, 0)
+  - 19eddc : Rulebook PDF
+
+
+DATA ACCURACY
+--------------------------------------------------------------------------------
+
+Object Count: 416/416 (100% verified)
+  - Manual count: 417 (user estimate)
+  - Actual count: 416 (confirmed)
+  - Discrepancy: -1 (likely counting variation)
+
+Categorization: High confidence
+  - Based on TTS object types
+  - Enhanced with nickname analysis
+  - Position-based zone assignment
+
+Completeness: 100%
+  - All top-level objects processed
+  - All nested objects extracted
+  - All metadata captured
+
+
+LIMITATIONS
+--------------------------------------------------------------------------------
+
+1. No visual inspection of actual object images
+2. Purpose inference based on names/types (may not be 100% accurate)
+3. No gameplay script analysis (Lua scripts not analyzed)
+4. Color detection based on names only (no ColorDiffuse analysis)
+5. Zone boundaries are estimated based on typical TTS layouts
+
+
+FUTURE ENHANCEMENTS
+--------------------------------------------------------------------------------
+
+Possible additional analysis:
+- Lua script parsing for game logic understanding
+- Image URL extraction and categorization
+- CustomDice face analysis
+- Card content analysis (from CardID mappings)
+- Token type identification from Infinite_Bag contents
+- Scripting trigger zone purpose identification
+- Color analysis from ColorDiffuse properties
+
+
+CONTACT & SUPPORT
+--------------------------------------------------------------------------------
+
+For questions about this analysis or to request additional perspectives:
+- Review the Python scripts (analyze_tts_objects.py)
+- Modify categorization rules in categorize_by_purpose()
+- Adjust zone boundaries in get_zone_from_position()
+- Re-run analysis with modifications
+
+
+================================================================================
+END OF INDEX
+================================================================================
+Analysis completed successfully.
+All 416 objects catalogued and categorized.

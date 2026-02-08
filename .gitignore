@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+*.egg-info/
+dist/
+build/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Downloaded mods and generated files
+*.tts
+*.deserialized.json
+*.deserialized/
+*.pdf
+*.jpg
+*.png
+*.json.bak
+
+# Temporary files
+*.tmp
+.cache/

@@ -1,0 +1,81 @@
+#!/bin/bash
+# tts-extract-sprites - Extract sprite metadata from TTS JSON
+# Part of tts-tools unified workflow
+
+set -e
+
+SCRIPT_DIR="$HOME/Library/CloudStorage/Box-Box/Work/bg/tts-tools"
+
+# Show help
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [[ -z "$1" ]]; then
+    cat << EOF
+Usage: tts-extract-sprites <json_file> [options]
+
+Extract sprite sheet metadata from TTS JSON files for PDF generation.
+
+Arguments:
+  json_file                Path to TTS JSON file (Workshop/*.json)
+
+Options:
+  -o, --output FILE        Output metadata file (default: sprite_metadata.json)
+  -v, --verbose            Show detailed progress
+  -h, --help              Show this help message
+
+Examples:
+  tts-extract-sprites Workshop/*.json
+  tts-extract-sprites Workshop/mod.json -o metadata.json
+  tts-extract-sprites Workshop/*.json -v
+
+Output:
+  sprite_metadata.json     # Sprite sheet metadata for PDF generation
+
+Notes:
+  - Run this from the mod's .deserialized/ directory
+  - Requires Images/ directory with downloaded assets
+  - Produces metadata mapping deck IDs to image files
+EOF
+    exit 0
+fi
+
+# Convert relative paths to absolute paths and handle default output
+ORIG_DIR="$(pwd)"
+ARGS=()
+HAS_OUTPUT=false
+PREV_ARG=""
+
+for arg in "$@"; do
+    # Check if previous arg was -o or --output
+    if [[ "$PREV_ARG" == "-o" ]] || [[ "$PREV_ARG" == "--output" ]]; then
+        HAS_OUTPUT=true
+        # This is the output path, convert to absolute if relative
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    elif [[ -f "$arg" ]] || [[ -d "$arg" ]] || [[ "$arg" == *"/"* ]]; then
+        # Could be a path, convert to absolute
+        if [[ "$arg" == /* ]]; then
+            # Already absolute
+            ARGS+=("$arg")
+        else
+            # Make it absolute
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    else
+        # Not a path, pass as-is
+        ARGS+=("$arg")
+        PREV_ARG="$arg"
+    fi
+done
+
+# If no output was specified, add it to save in original directory
+if [[ "$HAS_OUTPUT" == "false" ]]; then
+    ARGS+=("-o" "$ORIG_DIR/sprite_metadata.json")
+fi
+
+# Run with uv
+cd "$SCRIPT_DIR"
+uv run src/extract_sprites.py "${ARGS[@]}"

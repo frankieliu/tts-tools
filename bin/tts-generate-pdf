@@ -1,0 +1,127 @@
+#!/bin/bash
+# tts-generate-pdf - Generate complete deck PDF from TTS JSON
+# Part of tts-tools unified workflow
+
+set -e
+
+SCRIPT_DIR="$HOME/Library/CloudStorage/Box-Box/Work/bg/tts-tools"
+
+# Show help
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [[ -z "$1" ]]; then
+    cat << EOF
+Usage: tts-generate-pdf <json_file> [options]
+
+Generate complete deck PDF with all cards including duplicates from TTS JSON.
+
+Arguments:
+  json_file                Path to TTS JSON file (Workshop/*.json)
+
+Options:
+  -m, --metadata FILE      Sprite metadata file (default: sprite_metadata.json)
+  -o, --output FILE        Output PDF file (default: complete_deck.pdf)
+  --card-width INCHES      Card width in inches (default: 2.5)
+  --card-height INCHES     Card height in inches (default: 3.5)
+  --card-spacing INCHES    Spacing between cards (default: 0.0)
+  -h, --help              Show this help message
+
+Examples:
+  tts-generate-pdf Workshop/*.json
+  tts-generate-pdf Workshop/mod.json -o my_deck.pdf
+  tts-generate-pdf Workshop/*.json --card-spacing 0.1
+  tts-generate-pdf Workshop/*.json --card-width 2.75 --card-height 4.0
+
+Output:
+  complete_deck.pdf        # PDF with all cards in 3×3 grids
+
+Features:
+  - Extracts card duplication from JSON automatically
+  - Standard poker card size (2.5" × 3.5") by default
+  - No spacing between cards (perfect for cutting)
+  - Crop marks for easy card cutting
+  - Works with any TTS mod
+
+Notes:
+  - Run this from the mod's .deserialized/ directory
+  - Requires sprite_metadata.json (run tts-extract-sprites first)
+  - Requires Images/ directory with downloaded assets
+EOF
+    exit 0
+fi
+
+# Convert relative paths to absolute paths and handle default output
+ORIG_DIR="$(pwd)"
+ARGS=()
+HAS_OUTPUT=false
+HAS_METADATA=false
+PREV_ARG=""
+JSON_FILE=""
+
+for arg in "$@"; do
+    # Check if previous arg was -o or --output
+    if [[ "$PREV_ARG" == "-o" ]] || [[ "$PREV_ARG" == "--output" ]]; then
+        HAS_OUTPUT=true
+        # This is the output path, convert to absolute if relative
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    # Check if previous arg was -m or --metadata
+    elif [[ "$PREV_ARG" == "-m" ]] || [[ "$PREV_ARG" == "--metadata" ]]; then
+        HAS_METADATA=true
+        # This is the metadata path, convert to absolute if relative
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    elif [[ -f "$arg" ]] || [[ -d "$arg" ]] || [[ "$arg" == *"/"* ]]; then
+        # Could be a path, convert to absolute
+        if [[ "$arg" == /* ]]; then
+            # Already absolute
+            ARGS+=("$arg")
+            # Save JSON file path for later
+            if [[ "$arg" == *.json ]]; then
+                JSON_FILE="$arg"
+            fi
+        else
+            # Make it absolute
+            ARGS+=("$ORIG_DIR/$arg")
+            # Save JSON file path for later
+            if [[ "$arg" == *.json ]]; then
+                JSON_FILE="$ORIG_DIR/$arg"
+            fi
+        fi
+        PREV_ARG="$arg"
+    else
+        # Not a path, pass as-is
+        ARGS+=("$arg")
+        PREV_ARG="$arg"
+    fi
+done
+
+# If no metadata was specified, auto-detect it
+if [[ "$HAS_METADATA" == "false" ]] && [[ -n "$JSON_FILE" ]]; then
+    # If JSON is in Workshop/ subdirectory, look for metadata in parent
+    JSON_DIR="$(dirname "$JSON_FILE")"
+    if [[ "$(basename "$JSON_DIR")" == "Workshop" ]]; then
+        METADATA_PATH="$(dirname "$JSON_DIR")/sprite_metadata.json"
+    else
+        METADATA_PATH="$JSON_DIR/sprite_metadata.json"
+    fi
+
+    if [[ -f "$METADATA_PATH" ]]; then
+        ARGS+=("-m" "$METADATA_PATH")
+    fi
+fi
+
+# If no output was specified, add it to save in original directory
+if [[ "$HAS_OUTPUT" == "false" ]]; then
+    ARGS+=("-o" "$ORIG_DIR/complete_deck.pdf")
+fi
+
+# Run with uv
+cd "$SCRIPT_DIR"
+uv run src/generate_deck_from_json.py "${ARGS[@]}"

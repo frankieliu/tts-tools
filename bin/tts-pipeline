@@ -1,0 +1,211 @@
+#!/bin/bash
+# tts-pipeline - Complete TTS mod to PDF pipeline
+# Part of tts-tools unified workflow
+
+set -e
+
+# Get the directory where this script lives
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Show help
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [[ -z "$1" ]]; then
+    cat << EOF
+Usage: tts-pipeline <url_or_id> [options]
+
+Complete pipeline from Steam Workshop to printable deck PDF.
+Automates: download → deserialize → assets → sprites → PDF generation
+
+Arguments:
+  url_or_id                Steam Workshop URL or item ID
+
+Options:
+  -o, --output-dir DIR     Base output directory (default: current directory)
+  --card-width INCHES      Card width in inches (default: 2.5)
+  --card-height INCHES     Card height in inches (default: 3.5)
+  --card-spacing INCHES    Spacing between cards (default: 0.0)
+  --no-verify              Skip SSL certificate verification
+  -h, --help              Show this help message
+
+Examples:
+  tts-pipeline 3162057688
+  tts-pipeline "https://steamcommunity.com/sharedfiles/filedetails/?id=3162057688"
+  tts-pipeline 3162057688 -o my_mods
+  tts-pipeline 3162057688 --card-spacing 0.1
+
+Output:
+  <id>_<name>.deserialized/
+  ├── Images/                                # Downloaded card images
+  ├── Models/                                # Downloaded 3D models
+  ├── Assetbundles/                          # Downloaded asset bundles
+  ├── Workshop/                              # JSON files
+  ├── sprite_metadata.json                   # Sprite metadata
+  ├── complete_deck_faces_with_backs.pdf     # Cards with unique backs
+  ├── complete_deck_faces_no_backs.pdf       # Cards without unique backs
+  └── complete_deck_backs.pdf                # Unique backs (mirrored)
+
+Pipeline Steps:
+  1. Download .tts file and metadata from Steam Workshop
+  2. Deserialize .tts file to JSON format
+  3. Download all assets (images, models, assetbundles)
+  4. Extract sprite sheet metadata
+  5. Generate three PDFs: faces with backs, faces without backs, and backs
+
+Printing Workflow:
+  - Print faces_with_backs.pdf → flip stack → print backs.pdf (double-sided)
+  - Print faces_no_backs.pdf (single-sided)
+  - Landscape cards are auto-rotated 90° for proper orientation
+
+Notes:
+  - Each step can also be run individually (tts-download, tts-deserialize, etc.)
+  - Pipeline will create and manage all intermediate files
+  - Final PDF includes all cards with proper duplication from JSON
+EOF
+    exit 0
+fi
+
+# Parse arguments
+URL_OR_ID="$1"
+shift
+
+OUTPUT_DIR="."
+CARD_WIDTH="2.5"
+CARD_HEIGHT="3.5"
+CARD_SPACING="0.0"
+NO_VERIFY=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -o|--output-dir)
+            OUTPUT_DIR="$2"
+            shift 2
+            ;;
+        --card-width)
+            CARD_WIDTH="$2"
+            shift 2
+            ;;
+        --card-height)
+            CARD_HEIGHT="$2"
+            shift 2
+            ;;
+        --card-spacing)
+            CARD_SPACING="$2"
+            shift 2
+            ;;
+        --no-verify)
+            NO_VERIFY="--no-verify"
+            shift
+            ;;
+        *)
+            echo "Error: Unknown option $1"
+            exit 1
+            ;;
+    esac
+done
+
+echo "========================================="
+echo "TTS Pipeline: Workshop → PDF"
+echo "========================================="
+echo ""
+
+# Step 1: Download from Steam Workshop
+echo "Step 1/5: Downloading from Steam Workshop..."
+echo "  URL/ID: $URL_OR_ID"
+echo "  Output: $OUTPUT_DIR/"
+echo ""
+"$SCRIPT_DIR/tts-download" "$URL_OR_ID" -o "$OUTPUT_DIR"
+echo ""
+
+# Find the downloaded .tts file
+TTS_FILE=$(find "$OUTPUT_DIR" -name "*.tts" -type f | sort -r | head -n 1)
+if [[ -z "$TTS_FILE" ]]; then
+    echo "Error: No .tts file found in $OUTPUT_DIR"
+    exit 1
+fi
+
+echo "Found: $TTS_FILE"
+echo ""
+
+# Step 2: Deserialize .tts file
+echo "Step 2/5: Deserializing .tts file..."
+echo "  Input: $TTS_FILE"
+echo ""
+"$SCRIPT_DIR/tts-deserialize" "$TTS_FILE"
+echo ""
+
+# Find the deserialized JSON file
+JSON_FILE="${TTS_FILE%.tts}.deserialized.json"
+if [[ ! -f "$JSON_FILE" ]]; then
+    echo "Error: Deserialized JSON not found: $JSON_FILE"
+    exit 1
+fi
+
+echo "Created: $JSON_FILE"
+echo ""
+
+# Step 3: Download assets
+echo "Step 3/5: Downloading assets..."
+echo "  Input: $JSON_FILE"
+echo ""
+"$SCRIPT_DIR/tts-assets" "$JSON_FILE" $NO_VERIFY
+echo ""
+
+# Find the .deserialized directory
+DESERIALIZED_DIR="${TTS_FILE%.tts}.deserialized"
+if [[ ! -d "$DESERIALIZED_DIR" ]]; then
+    echo "Error: Deserialized directory not found: $DESERIALIZED_DIR"
+    exit 1
+fi
+
+echo "Assets downloaded to: $DESERIALIZED_DIR/"
+echo ""
+
+# Step 4: Extract sprite metadata
+echo "Step 4/5: Extracting sprite metadata..."
+cd "$DESERIALIZED_DIR"
+WORKSHOP_JSON=$(find Workshop -name "*.json" -type f | head -n 1)
+if [[ -z "$WORKSHOP_JSON" ]]; then
+    echo "Error: No JSON file found in Workshop/"
+    exit 1
+fi
+
+echo "  Input: $WORKSHOP_JSON"
+echo ""
+"$SCRIPT_DIR/tts-extract-sprites" "$WORKSHOP_JSON"
+echo ""
+
+if [[ ! -f "sprite_metadata.json" ]]; then
+    echo "Error: sprite_metadata.json not created"
+    exit 1
+fi
+
+echo "Created: sprite_metadata.json"
+echo ""
+
+# Step 5: Generate complete deck PDFs
+echo "Step 5/5: Generating deck PDFs..."
+echo "  Card size: ${CARD_WIDTH}\" × ${CARD_HEIGHT}\""
+echo "  Spacing: ${CARD_SPACING}\""
+echo ""
+"$SCRIPT_DIR/tts-generate-pdf" "$WORKSHOP_JSON" \
+    --card-width "$CARD_WIDTH" \
+    --card-height "$CARD_HEIGHT" \
+    --card-spacing "$CARD_SPACING"
+echo ""
+
+# Success!
+echo "========================================="
+echo "Pipeline Complete! ✓"
+echo "========================================="
+echo ""
+echo "Generated PDFs in: $DESERIALIZED_DIR/"
+echo ""
+echo "  complete_deck_faces_with_backs.pdf - Cards with unique backs"
+echo "  complete_deck_faces_no_backs.pdf   - Cards without unique backs"
+echo "  complete_deck_backs.pdf            - Unique backs (mirrored for printing)"
+echo ""
+echo "Double-sided printing workflow:"
+echo "  1. Print complete_deck_faces_with_backs.pdf on cardstock"
+echo "  2. Flip the stack and print complete_deck_backs.pdf on reverse"
+echo "  3. Print complete_deck_faces_no_backs.pdf (single-sided)"
+echo "  4. Cut out all cards"
+echo ""

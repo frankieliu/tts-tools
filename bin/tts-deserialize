@@ -1,0 +1,68 @@
+#!/bin/bash
+# tts-deserialize - Deserialize TTS save files
+# Part of tts-tools unified workflow
+
+set -e
+
+SCRIPT_DIR="$HOME/Library/CloudStorage/Box-Box/Work/bg/tts-tools"
+
+# Show help
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [[ -z "$1" ]]; then
+    cat << EOF
+Usage: tts-deserialize <tts_file> [options]
+
+Deserialize Tabletop Simulator .tts save files to JSON format.
+
+Arguments:
+  tts_file                 Path to .tts file
+
+Options:
+  -o, --output FILE        Output JSON file (default: <input>.deserialized.json)
+  --no-output              Don't write output file (analysis only)
+  --analyze                Show detailed analysis
+  -h, --help              Show this help message
+
+Examples:
+  tts-deserialize downloads/3162057688_Evenfall.tts
+  tts-deserialize file.tts -o custom_output.json
+  tts-deserialize file.tts --analyze
+
+Output:
+  <input>.deserialized.json    # Deserialized JSON file
+EOF
+    exit 0
+fi
+
+# Convert relative paths to absolute before changing directory
+ORIG_DIR="$(pwd)"
+ARGS=()
+PREV_ARG=""
+
+for arg in "$@"; do
+    # Check if previous arg was -o or --output
+    if [[ "$PREV_ARG" == "-o" ]] || [[ "$PREV_ARG" == "--output" ]]; then
+        # This is the output path, convert to absolute if relative
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    elif [[ -f "$arg" ]] || [[ "$arg" == *".tts" ]]; then
+        # This looks like a file path, convert to absolute
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    else
+        # Pass as-is
+        ARGS+=("$arg")
+        PREV_ARG="$arg"
+    fi
+done
+
+# Run with uv
+cd "$SCRIPT_DIR"
+uv run src/tts_deserializer.py "${ARGS[@]}"
