@@ -219,6 +219,43 @@ if print_width_inches > max_size or print_height_inches > max_size:
 - PNG transparency supported (alpha channel)
 - High-resolution output for printing
 
+### Deriving the Correct Scale Factor
+
+The TTS JSON contains enough information to calculate physical sizes if you know ONE actual component size.
+
+**Formula:**
+```
+width_mm  = BASE × scaleX × aspect_ratio
+height_mm = BASE × scaleZ
+```
+
+Where:
+- `BASE` = calibration constant in mm (derived from known component)
+- `scaleX/Z` = Transform.scaleX and Transform.scaleZ from JSON
+- `aspect_ratio` = image_width / image_height (from downloaded image)
+
+**To derive BASE from a known card size:**
+```
+BASE = known_height_mm / scaleZ
+```
+
+**Example (Jisogi mod):**
+- Type 3 Standard Cards: 63×88mm at scale 0.92
+- BASE = 88mm / 0.92 ≈ 96mm
+- Scale factor for inches: 96mm / 25.4 ≈ 3.78
+
+**To use with tts-generate-tiles-pdf:**
+```bash
+tts-generate-tiles-pdf Workshop/*.json --scale-factor 3.78
+```
+
+**Key JSON fields for scaling:**
+| Object Type | Scale Source | Aspect Source |
+|------------|--------------|---------------|
+| DeckCustom | Transform.scaleX/Z | (sheet_width/NumWidth) / (sheet_height/NumHeight) |
+| Custom_Tile | Transform.scaleX/Z | image_width / image_height |
+| Custom_Token | Transform.scaleX/Z | image_width / image_height |
+
 ## Limitations
 
 1. **No absolute size information** - TTS scale is relative only
