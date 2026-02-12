@@ -95,10 +95,13 @@ tts-generate-tiles-pdf <json_file> [options]
 **Options:**
 - `-m, --metadata FILE` - Path to tile_metadata.json (default: tile_metadata.json)
 - `-o, --output FILE` - Output PDF file (default: tiles_and_boards.pdf)
-- `--scale-factor N` - TTS scale to inches conversion (default: 1.0)
+- `--scale-factor N` - TTS scale to inches conversion (default: auto-detect from cards)
 - `--max-size N` - Maximum dimension in inches (default: 10.0)
 - `--tiles-only` - Generate only tiles (ignore boards)
 - `--boards-only` - Generate only boards (ignore tiles)
+
+**Auto-Detection:**
+By default, the tool automatically detects the correct scale factor by analyzing card decks in the mod. It assumes standard poker card dimensions (88mm height) and calculates the appropriate scale factor. You can override this with `--scale-factor` if needed.
 
 **Examples:**
 

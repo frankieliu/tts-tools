@@ -253,9 +253,13 @@ tts-generate-tiles-pdf Workshop/*.json --boards-only
 **Output:**
 - `tiles_and_boards.pdf` - One tile/board per page with crop marks and size labels
 
+**Auto-Detection:**
+By default, the tool automatically detects the correct scale factor by analyzing card decks in the mod. It assumes standard poker card dimensions (88mm height) and calculates the appropriate scale factor. You can override this with `--scale-factor` if needed.
+
 **Scale Factor Guide:**
-- Default: `--scale-factor 1.0` (1 TTS unit = 1 inch)
-- For large backgrounds: Use smaller scale or `--max-size` constraint
+- Default: auto-detect from cards (recommended)
+- Manual: `--scale-factor N` where N = TTS units to inches
+- For large backgrounds: Use `--max-size` constraint
 - See `docs/TILES_AND_BOARDS.md` for detailed scaling guide
 
 ## Examples

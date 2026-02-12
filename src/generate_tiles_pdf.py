@@ -20,6 +20,97 @@ from reportlab.lib.utils import ImageReader
 import sys
 
 
+# Standard card dimensions for auto-detection
+STANDARD_CARD_HEIGHT_MM = 88.0  # Standard poker card height
+STANDARD_CARD_ASPECT_MIN = 0.60  # Minimum aspect ratio for standard cards
+STANDARD_CARD_ASPECT_MAX = 0.80  # Maximum aspect ratio for standard cards
+
+
+def auto_detect_scale_factor(json_file: Path) -> float | None:
+    """
+    Auto-detect scale factor from cards in the TTS JSON file.
+
+    Looks for DeckCustom objects with standard card aspect ratios and
+    derives the scale factor based on standard card dimensions.
+
+    Formula: scale_factor = (STANDARD_CARD_HEIGHT_MM / scaleZ) / 25.4
+
+    Returns:
+        Scale factor (TTS units to inches), or None if can't detect
+    """
+    try:
+        with open(json_file) as f:
+            data = json.load(f)
+    except Exception as e:
+        print(f"Warning: Could not read JSON for scale detection: {e}")
+        return None
+
+    # Find all DeckCustom objects
+    deck_scales = []
+
+    def find_decks(obj, depth=0):
+        """Recursively find DeckCustom objects"""
+        if not isinstance(obj, dict):
+            return
+
+        obj_name = obj.get('Name', '')
+
+        if obj_name in ('DeckCustom', 'Deck'):
+            transform = obj.get('Transform', {})
+            scale_z = transform.get('scaleZ', 1.0)
+
+            # Check if this looks like a standard card deck
+            custom_deck = obj.get('CustomDeck', {})
+            for deck_id, deck_info in custom_deck.items():
+                num_width = deck_info.get('NumWidth', 1)
+                num_height = deck_info.get('NumHeight', 1)
+
+                # Standard cards typically have 1 row (NumHeight=1) or known grid sizes
+                # and aspect ratios around 0.71 (63/88)
+                if num_height >= 1:
+                    deck_scales.append({
+                        'scale_z': scale_z,
+                        'num_width': num_width,
+                        'num_height': num_height,
+                        'nickname': obj.get('Nickname', ''),
+                    })
+
+        # Recurse into contained objects
+        for key in ('ObjectStates', 'ContainedObjects'):
+            if key in obj and isinstance(obj[key], list):
+                for item in obj[key]:
+                    find_decks(item, depth + 1)
+
+    find_decks(data)
+
+    if not deck_scales:
+        return None
+
+    # Find decks with typical card scales (0.8 - 1.5 range, avoiding very large/small)
+    candidate_scales = [d['scale_z'] for d in deck_scales if 0.5 <= d['scale_z'] <= 2.0]
+
+    if not candidate_scales:
+        # Fall back to all scales
+        candidate_scales = [d['scale_z'] for d in deck_scales]
+
+    if not candidate_scales:
+        return None
+
+    # Use the most common scale value (mode)
+    from collections import Counter
+    scale_counts = Counter(round(s, 2) for s in candidate_scales)
+    most_common_scale = scale_counts.most_common(1)[0][0]
+
+    # Calculate BASE from standard card height
+    # BASE = standard_height_mm / scaleZ
+    base_mm = STANDARD_CARD_HEIGHT_MM / most_common_scale
+
+    # Convert to scale factor (mm to inches)
+    scale_factor = base_mm / 25.4
+
+    return scale_factor
+
+
 def extract_items(metadata_file: Path) -> tuple:
     """
     Extract tiles, boards, and tokens from metadata.
@@ -417,8 +508,8 @@ def main():
                         help='Path to tile_metadata.json (default: tile_metadata.json)')
     parser.add_argument('-o', '--output', default='tiles_and_boards.pdf',
                         help='Output PDF file (default: tiles_and_boards.pdf)')
-    parser.add_argument('--scale-factor', type=float, default=1.0,
-                        help='TTS scale units to inches conversion (default: 1.0)')
+    parser.add_argument('--scale-factor', type=float, default=None,
+                        help='TTS scale units to inches conversion (default: auto-detect from cards)')
     parser.add_argument('--max-size', type=float, default=10.0,
                         help='Maximum dimension for any item in inches (default: 10.0)')
     parser.add_argument('--small-threshold', type=float, default=4.0,
@@ -444,6 +535,20 @@ def main():
         print(f"Error: Metadata file not found: {metadata_file}")
         print("Run tts-extract-tiles first to generate metadata")
         return 1
+
+    # Determine scale factor
+    if args.scale_factor is not None:
+        scale_factor = args.scale_factor
+        print(f"Using specified scale factor: {scale_factor:.2f}")
+    else:
+        # Auto-detect from cards in the JSON
+        detected = auto_detect_scale_factor(json_file)
+        if detected:
+            scale_factor = detected
+            print(f"Auto-detected scale factor: {scale_factor:.2f} (from card dimensions)")
+        else:
+            scale_factor = 1.0
+            print(f"Could not auto-detect scale factor, using default: {scale_factor:.2f}")
 
     # Extract items
     tiles, boards, tokens = extract_items(metadata_file)
@@ -471,7 +576,7 @@ def main():
     generate_tiles_pdf(
         items,
         output_file,
-        scale_factor=args.scale_factor,
+        scale_factor=scale_factor,
         max_size=args.max_size,
         small_item_threshold=args.small_threshold,
         no_labels=args.no_labels,
