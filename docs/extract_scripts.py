@@ -4,9 +4,9 @@ import os
 import re
 from pathlib import Path
 
-# File paths
-json_file = "/Users/frankliu/Library/CloudStorage/Box-Box/Work/bg/tend/Mods/Workshop/3356045383.json"
-output_dir = "/Users/frankliu/Library/CloudStorage/Box-Box/Work/bg/tend/Mods/Workshop/extracted_scripts"
+# File paths - UPDATE THESE FOR YOUR USE CASE
+json_file = "/path/to/your/mod.json"
+output_dir = "/path/to/output/extracted_scripts"
 
 # Create output directory
 Path(output_dir).mkdir(exist_ok=True)

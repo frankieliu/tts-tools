@@ -342,8 +342,9 @@ def format_report(analysis: Dict) -> str:
 
 def main():
     """Main execution"""
-    input_file = '/Users/frankliu/Library/CloudStorage/Box-Box/Work/bg/tend/Mods/Workshop/3356045383.json'
-    output_file = '/Users/frankliu/Library/CloudStorage/Box-Box/Work/bg/tend/Mods/Workshop/tts_analysis_report.txt'
+    # UPDATE THESE PATHS FOR YOUR USE CASE
+    input_file = '/path/to/your/mod.json'
+    output_file = '/path/to/output/tts_analysis_report.txt'
 
     print(f"Loading JSON file: {input_file}")
     print(f"File size: 3.1MB, 103,431 lines")

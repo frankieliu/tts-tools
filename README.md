@@ -39,9 +39,9 @@ Alternative for tiles/boards:
 
 ### Setup
 
-1. Add tools to your PATH:
+1. Add tools to your PATH (adjust path to where you cloned this repo):
 ```bash
-export PATH="$HOME/Library/CloudStorage/Box-Box/Work/bg/tts-tools/bin:$PATH"
+export PATH="/path/to/tts-tools/bin:$PATH"
 ```
 
 Add this to your `~/.bashrc` or `~/.zshrc` for persistence.
@@ -388,18 +388,8 @@ tts-pipeline 3162057688 --no-verify
 If you see venv errors, create the environment manually:
 
 ```bash
-# For download/deserialize tools
-cd ~/Work/bg/steam_workshop
-uv venv
-uv pip install -r requirements.txt
-
-# For asset download
-cd ~/Library/CloudStorage/Box-Box/Work/bg/tts-mod-download
-uv venv
-uv pip install -r requirements.txt
-
-# For PDF generation
-cd ~/Library/CloudStorage/Box-Box/Work/bg/tts-mods
+# Navigate to the tts-tools directory and create venv
+cd /path/to/tts-tools
 uv venv
 uv pip install .
 ```
