@@ -522,8 +522,8 @@ def main():
                         help='Generate PDF with tokens only')
     parser.add_argument('--no-labels', action='store_true',
                         help='Do not draw text labels on items')
-    parser.add_argument('--no-grouping', action='store_true',
-                        help='Print all duplicate items (do not group)')
+    parser.add_argument('--group', action='store_true',
+                        help='Group duplicate items (default: print all copies)')
 
     args = parser.parse_args()
 
@@ -580,7 +580,7 @@ def main():
         max_size=args.max_size,
         small_item_threshold=args.small_threshold,
         no_labels=args.no_labels,
-        no_grouping=args.no_grouping
+        no_grouping=not args.group
     )
 
     return 0
