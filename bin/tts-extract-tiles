@@ -2,7 +2,79 @@
 # tts-extract-tiles - Extract tile/board metadata from TTS JSON files
 # Part of tts-tools unified workflow
 
-SCRIPT_DIR="$HOME/Library/CloudStorage/Box-Box/Work/bg/tts-tools"
+set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Show help
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [[ -z "$1" ]]; then
+    cat << EOF
+Usage: tts-extract-tiles <json_file> [options]
+
+Extract tile, board, and token metadata from TTS JSON files.
+
+Arguments:
+  json_file                Path to TTS JSON file (Workshop/*.json)
+
+Options:
+  -o, --output FILE        Output metadata file (default: tile_metadata.json)
+  -v, --verbose            Show detailed progress
+  -h, --help              Show this help message
+
+Examples:
+  tts-extract-tiles Workshop/*.json
+  tts-extract-tiles Workshop/mod.json -o metadata.json
+  tts-extract-tiles Workshop/*.json -v
+
+Output:
+  tile_metadata.json       # Tile/board/token metadata for PDF generation
+
+Notes:
+  - Run this from the mod's .deserialized/ directory
+  - Requires Images/ directory with downloaded assets
+EOF
+    exit 0
+fi
+
+# Convert relative paths to absolute paths and handle default output
+ORIG_DIR="$(pwd)"
+ARGS=()
+HAS_OUTPUT=false
+PREV_ARG=""
+
+for arg in "$@"; do
+    # Check if previous arg was -o or --output
+    if [[ "$PREV_ARG" == "-o" ]] || [[ "$PREV_ARG" == "--output" ]]; then
+        HAS_OUTPUT=true
+        # This is the output path, convert to absolute if relative
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    elif [[ -f "$arg" ]] || [[ -d "$arg" ]] || [[ "$arg" == *"/"* ]]; then
+        # Could be a path, convert to absolute
+        if [[ "$arg" == /* ]]; then
+            # Already absolute
+            ARGS+=("$arg")
+        else
+            # Make it absolute
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    else
+        # Not a path, pass as-is
+        ARGS+=("$arg")
+        PREV_ARG="$arg"
+    fi
+done
+
+# If no output was specified, add it to save in original directory
+if [[ "$HAS_OUTPUT" == "false" ]]; then
+    ARGS+=("-o" "$ORIG_DIR/tile_metadata.json")
+fi
+
+# Run with uv
 cd "$SCRIPT_DIR"
-uv run src/extract_tiles.py "$@"
+uv run src/extract_tiles.py "${ARGS[@]}"

@@ -2,7 +2,119 @@
 # tts-generate-tiles-pdf - Generate PDF from tiles and boards
 # Part of tts-tools unified workflow
 
-SCRIPT_DIR="$HOME/Library/CloudStorage/Box-Box/Work/bg/tts-tools"
+set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Show help
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [[ -z "$1" ]]; then
+    cat << EOF
+Usage: tts-generate-tiles-pdf <json_file> [options]
+
+Generate printable PDF of tiles and boards from TTS JSON.
+
+Arguments:
+  json_file                Path to TTS JSON file (Workshop/*.json)
+
+Options:
+  -m, --metadata FILE      Tile metadata file (default: tile_metadata.json)
+  -o, --output FILE        Output PDF file (default: tiles_and_boards.pdf)
+  --scale-factor FLOAT     TTS units to inches (default: 1.0)
+  --max-size FLOAT         Maximum size in inches (default: none)
+  --tiles-only             Only generate tiles
+  --boards-only            Only generate boards
+  -h, --help              Show this help message
+
+Examples:
+  tts-generate-tiles-pdf Workshop/*.json
+  tts-generate-tiles-pdf Workshop/mod.json --scale-factor 0.5
+  tts-generate-tiles-pdf Workshop/*.json --max-size 10.0
+
+Output:
+  tiles_and_boards.pdf     # One tile/board per page with crop marks
+
+Notes:
+  - Run this from the mod's .deserialized/ directory
+  - Requires tile_metadata.json (run tts-extract-tiles first)
+  - Requires Images/ directory with downloaded assets
+EOF
+    exit 0
+fi
+
+# Convert relative paths to absolute paths and handle default output
+ORIG_DIR="$(pwd)"
+ARGS=()
+HAS_OUTPUT=false
+HAS_METADATA=false
+PREV_ARG=""
+JSON_FILE=""
+
+for arg in "$@"; do
+    # Check if previous arg was -o or --output
+    if [[ "$PREV_ARG" == "-o" ]] || [[ "$PREV_ARG" == "--output" ]]; then
+        HAS_OUTPUT=true
+        # This is the output path, convert to absolute if relative
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    # Check if previous arg was -m or --metadata
+    elif [[ "$PREV_ARG" == "-m" ]] || [[ "$PREV_ARG" == "--metadata" ]]; then
+        HAS_METADATA=true
+        # This is the metadata path, convert to absolute if relative
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    elif [[ -f "$arg" ]] || [[ -d "$arg" ]] || [[ "$arg" == *"/"* ]]; then
+        # Could be a path, convert to absolute
+        if [[ "$arg" == /* ]]; then
+            # Already absolute
+            ARGS+=("$arg")
+            # Save JSON file path for later
+            if [[ "$arg" == *.json ]]; then
+                JSON_FILE="$arg"
+            fi
+        else
+            # Make it absolute
+            ARGS+=("$ORIG_DIR/$arg")
+            # Save JSON file path for later
+            if [[ "$arg" == *.json ]]; then
+                JSON_FILE="$ORIG_DIR/$arg"
+            fi
+        fi
+        PREV_ARG="$arg"
+    else
+        # Not a path, pass as-is
+        ARGS+=("$arg")
+        PREV_ARG="$arg"
+    fi
+done
+
+# If no metadata was specified, auto-detect it
+if [[ "$HAS_METADATA" == "false" ]] && [[ -n "$JSON_FILE" ]]; then
+    # If JSON is in Workshop/ subdirectory, look for metadata in parent
+    JSON_DIR="$(dirname "$JSON_FILE")"
+    if [[ "$(basename "$JSON_DIR")" == "Workshop" ]]; then
+        METADATA_PATH="$(dirname "$JSON_DIR")/tile_metadata.json"
+    else
+        METADATA_PATH="$JSON_DIR/tile_metadata.json"
+    fi
+
+    if [[ -f "$METADATA_PATH" ]]; then
+        ARGS+=("-m" "$METADATA_PATH")
+    fi
+fi
+
+# If no output was specified, add it to save in original directory
+if [[ "$HAS_OUTPUT" == "false" ]]; then
+    ARGS+=("-o" "$ORIG_DIR/tiles_and_boards.pdf")
+fi
+
+# Run with uv
 cd "$SCRIPT_DIR"
-uv run src/generate_tiles_pdf.py "$@"
+uv run src/generate_tiles_pdf.py "${ARGS[@]}"

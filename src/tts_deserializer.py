@@ -24,6 +24,7 @@ class TTSDeserializer:
     TYPE_ARRAY = 0x04
     TYPE_BOOL = 0x08
     TYPE_INT = 0x10
+    TYPE_INT64 = 0x12  # 64-bit integer (used for OwnerSteamID, etc.)
 
     def __init__(self, data: bytes):
         self.data = data
@@ -50,6 +51,10 @@ class TTSDeserializer:
     def read_int32(self) -> int:
         """Read signed 32-bit integer (little-endian)"""
         return struct.unpack('<i', self.read_bytes(4))[0]
+
+    def read_int64(self) -> int:
+        """Read signed 64-bit integer (little-endian)"""
+        return struct.unpack('<q', self.read_bytes(8))[0]
 
     def read_float(self) -> float:
         """Read 32-bit float (little-endian)"""
@@ -103,6 +108,9 @@ class TTSDeserializer:
 
         elif type_marker == self.TYPE_INT:
             return self.read_int32()
+
+        elif type_marker == self.TYPE_INT64:
+            return self.read_int64()
 
         elif type_marker == self.TYPE_FLOAT:
             return self.read_double()

@@ -4,7 +4,7 @@
 
 set -e
 
-SCRIPT_DIR="$HOME/Library/CloudStorage/Box-Box/Work/bg/tts-tools"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Show help
 if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [[ -z "$1" ]]; then
