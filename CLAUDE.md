@@ -18,6 +18,7 @@ Before proceeding with any task, please check for relevant custom instructions i
 ## Available Custom Instructions
 
 Check the custom-instructions directory for files like:
+- `shell-command-aliases.md` - **CRITICAL:** Always use -f flag with rm, cp, mv commands
 - `stealth-fetch.md` - Web fetching tool for Cloudflare-protected sites
 - `python-uv-usage.md` - Always use UV for Python package management and script execution
 - `mermaid_code_formatting_guide.md` - Mermaid diagram formatting guidelines
