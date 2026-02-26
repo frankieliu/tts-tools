@@ -43,6 +43,8 @@ Tools are in `bin/` under this project root. They are **not** on PATH, so always
 /Users/frankliu/Projects/bg/tts-tools/bin/tts-generate-pdf
 /Users/frankliu/Projects/bg/tts-tools/bin/tts-generate-tiles-pdf
 /Users/frankliu/Projects/bg/tts-tools/bin/tts-generate-board-pdf
+/Users/frankliu/Projects/bg/tts-tools/bin/tts-extract-models
+/Users/frankliu/Projects/bg/tts-tools/bin/tts-generate-model-textures-pdf
 /Users/frankliu/Projects/bg/tts-tools/bin/tts-pipeline
 /Users/frankliu/Projects/bg/tts-tools/bin/tts-mod
 ```
@@ -120,9 +122,10 @@ After step 3, `cd` into the `.deserialized/` directory. Then run **both** extrac
 cd /path/to/output_dir/<id>_<name>.deserialized
 $TTS_BIN/tts-extract-tiles Workshop/*.json
 $TTS_BIN/tts-extract-sprites Workshop/*.json
+$TTS_BIN/tts-extract-models Workshop/*.json
 ```
 
-`tts-extract-tiles` prints a summary like: "Found X tile(s), Y board(s), and Z token(s)". `tts-extract-sprites` prints what card decks were found. Use this output to decide which PDF generators to run:
+`tts-extract-tiles` prints a summary like: "Found X tile(s), Y board(s), and Z token(s)". `tts-extract-sprites` prints what card decks were found. `tts-extract-models` prints what 3D model textures were found. Use this output to decide which PDF generators to run:
 
 #### If cards were found:
 
@@ -130,7 +133,12 @@ $TTS_BIN/tts-extract-sprites Workshop/*.json
 $TTS_BIN/tts-generate-pdf Workshop/*.json
 ```
 
-Outputs: `complete_deck_faces_with_backs.pdf`, `complete_deck_faces_no_backs.pdf`, `complete_deck_backs.pdf`
+Outputs up to 4 PDFs depending on what the mod contains:
+
+- `complete_deck_faces_with_backs.pdf` — Card faces from decks that have **unique** backs (each card has a different back image). Only generated if such decks exist.
+- `complete_deck_backs.pdf` — The unique back images, mirrored horizontally for double-sided printing. Pairs with `faces_with_backs.pdf`.
+- `complete_deck_faces_no_backs.pdf` — Card faces from decks that have **shared** backs (many cards use the same back image). The name means "faces without accompanying back pages", not that the cards lack backs.
+- `complete_deck_shared_backs.pdf` — One copy of each distinct shared back image. Some of these are generic card-back patterns, but others are content-bearing (reference cards, player aids, victory conditions).
 
 #### If tiles were found (small items packed, large items one per page):
 
@@ -156,6 +164,14 @@ Options:
 - `--overlap INCHES` - Overlap between adjacent pages for easier assembly
 - `--no-labels` - Omit assembly labels
 
+#### If 3D models were found (diffuse textures):
+
+```bash
+$TTS_BIN/tts-generate-model-textures-pdf -m model_texture_metadata.json
+```
+
+Output: `model_textures.pdf` — one texture per page, scaled to fit letter size.
+
 #### If the mod has a mix of components
 
 Run all applicable generators. Most board game mods have cards + tiles + boards.
@@ -174,9 +190,10 @@ This does NOT generate tiles or board PDFs — only card deck PDFs. Prefer `tts-
 
 | Mod contains | Extract tool | PDF tool | Output |
 |---|---|---|---|
-| Card decks | `tts-extract-sprites` | `tts-generate-pdf` | 3 deck PDFs |
+| Card decks | `tts-extract-sprites` | `tts-generate-pdf` | Up to 4 deck PDFs (see below) |
 | Tiles (small) | `tts-extract-tiles` | `tts-generate-tiles-pdf` | `tiles_and_boards.pdf` |
 | Boards (large) | `tts-extract-tiles` | `tts-generate-board-pdf` | `board.pdf` |
+| 3D Models | `tts-extract-models` | `tts-generate-model-textures-pdf` | `model_textures.pdf` |
 
 ## Output Directory Structure
 
@@ -189,12 +206,39 @@ This does NOT generate tiles or board PDFs — only card deck PDFs. Prefer `tts-
 │   └── <id>_<name>.deserialized.json   # TTS mod JSON
 ├── sprite_metadata.json                 # Card metadata (from tts-extract-sprites, uses composite keys)
 ├── tile_metadata.json                   # Tile/board metadata (from tts-extract-tiles)
-├── complete_deck_faces_with_backs.pdf   # Card faces with unique backs
-├── complete_deck_faces_no_backs.pdf     # Card faces without unique backs
-├── complete_deck_backs.pdf              # Card backs (mirrored)
+├── model_texture_metadata.json          # 3D model texture metadata (from tts-extract-models)
+├── complete_deck_faces_with_backs.pdf   # Faces of cards with unique (per-card) backs
+├── complete_deck_faces_no_backs.pdf     # Faces of cards with shared backs (back not inline)
+├── complete_deck_backs.pdf              # Unique backs, mirrored for double-sided printing
+├── complete_deck_shared_backs.pdf       # One copy of each distinct shared back image
 ├── tiles_and_boards.pdf                 # Small items packed, large items one-per-page
-└── board.pdf                            # Large board split across pages
+├── board.pdf                            # Large board split across pages
+└── model_textures.pdf                   # 3D model diffuse textures, one per page
 ```
+
+## Known Gaps
+
+The following TTS object types are **not** handled by the toolchain:
+
+### ~~Shared card backs not printed~~ (FIXED)
+
+Shared card backs are now resolved in `extract_sprites.py` and printed in `complete_deck_shared_backs.pdf` (one copy per distinct back image). This covers reference cards, player aids, and other content-bearing backs that were previously dropped.
+
+### Custom_PDF objects
+
+`Custom_PDF` objects (22 found across mods) embed PDF documents (rulebooks, reference sheets) via a `CustomPDF.PDFUrl` field. These could be downloaded and included or extracted. Currently ignored entirely.
+
+### Custom_Assetbundle objects
+
+`Custom_Assetbundle` objects (102 across mods) are compiled Unity asset bundles. Textures cannot be extracted without Unity tooling. Not practical to handle.
+
+### Built-in TTS pieces
+
+`BlockSquare`, `PlayerPawn`, `Die_6_Rounded`, `Checker_red`, `Chinese_Checkers_Piece` — generic TTS pieces with no custom images. Not printable. `Custom_Dice` (3 across mods) could have custom face textures but is very rare.
+
+### Notecards
+
+`Notecard` objects contain text content but are not image-based. Not printable in the same way as other components.
 
 ## Notes
 

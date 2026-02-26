@@ -40,6 +40,7 @@ Output (in ~/Projects/bg/<game_name>/):
   ├── complete_deck_backs.pdf
   ├── tiles_and_boards.pdf
   └── board.pdf (if boards found)
+  └── model_textures.pdf (if 3D models found)
 EOF
     exit 0
 fi
@@ -194,6 +195,9 @@ echo "$TILES_OUTPUT"
 
 SPRITES_OUTPUT=$("$SCRIPT_DIR/tts-extract-sprites" "$WORKSHOP_JSON" 2>&1)
 echo "$SPRITES_OUTPUT"
+
+MODELS_OUTPUT=$("$SCRIPT_DIR/tts-extract-models" "$WORKSHOP_JSON" 2>&1)
+echo "$MODELS_OUTPUT"
 echo ""
 
 # Parse what was found (head -1 to avoid multi-line matches)
@@ -201,10 +205,12 @@ NUM_TILES=$(echo "$TILES_OUTPUT" | grep -oE '[0-9]+ tile' | head -1 | grep -oE '
 NUM_BOARDS=$(echo "$TILES_OUTPUT" | grep -oE '[0-9]+ board' | head -1 | grep -oE '[0-9]+' || echo "0")
 NUM_TOKENS=$(echo "$TILES_OUTPUT" | grep -oE '[0-9]+ token' | head -1 | grep -oE '[0-9]+' || echo "0")
 NUM_SPRITES=$(echo "$SPRITES_OUTPUT" | grep -oE '[0-9]+ sprite' | head -1 | grep -oE '[0-9]+' || echo "0")
+NUM_MODELS=$(echo "$MODELS_OUTPUT" | grep -oE '[0-9]+ model texture' | head -1 | grep -oE '[0-9]+' || echo "0")
 
 HAS_CARDS=false
 HAS_TILES=false
 HAS_BOARDS=false
+HAS_MODELS=false
 
 if [[ "$NUM_SPRITES" -gt 0 ]]; then
     HAS_CARDS=true
@@ -219,6 +225,10 @@ if [[ "$NUM_BOARDS" -gt 0 ]]; then
     HAS_BOARDS=true
 fi
 
+if [[ "$NUM_MODELS" -gt 0 ]]; then
+    HAS_MODELS=true
+fi
+
 # Step 5: Generate PDFs
 echo "Step 5/6: Generating PDFs..."
 GENERATED=()
@@ -230,7 +240,7 @@ if [[ "$HAS_CARDS" == "true" ]]; then
         --card-width "$CARD_WIDTH" \
         --card-height "$CARD_HEIGHT" \
         --card-spacing "$CARD_SPACING"
-    GENERATED+=("complete_deck_faces_with_backs.pdf" "complete_deck_faces_no_backs.pdf" "complete_deck_backs.pdf")
+    GENERATED+=("complete_deck_faces_with_backs.pdf" "complete_deck_faces_no_backs.pdf" "complete_deck_backs.pdf" "complete_deck_shared_backs.pdf")
 else
     echo "  No card decks found, skipping deck PDFs"
 fi
@@ -251,6 +261,15 @@ if [[ "$HAS_BOARDS" == "true" ]]; then
     GENERATED+=("board.pdf")
 else
     echo "  No boards found, skipping board PDF"
+fi
+
+if [[ "$HAS_MODELS" == "true" ]]; then
+    echo ""
+    echo "  Generating model textures PDF..."
+    "$SCRIPT_DIR/tts-generate-model-textures-pdf" -m "$DESERIALIZED_DIR/model_texture_metadata.json"
+    GENERATED+=("model_textures.pdf")
+else
+    echo "  No 3D model textures found, skipping model textures PDF"
 fi
 
 echo ""

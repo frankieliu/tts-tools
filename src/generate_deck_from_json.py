@@ -2,10 +2,11 @@
 """
 Generate PDFs with all cards from a TTS JSON file, respecting duplicates.
 Reads the JSON file to determine how many copies of each card exist.
-Generates three PDFs:
+Generates up to four PDFs:
   1. Faces with backs - cards that have unique backs
-  2. Faces without backs - cards with generic backs
+  2. Faces without backs - cards with generic/shared backs
   3. Backs - unique backs mirrored for double-sided printing
+  4. Shared backs - one copy of each distinct shared back image
 """
 
 import json
@@ -298,6 +299,8 @@ def generate_deck_pdf(
     cards_with_backs = []
     cards_without_backs = []
     backs_list = []
+    shared_backs_seen = set()  # Track distinct shared back URLs already added
+    shared_backs_list = []     # One entry per distinct shared back image
     sprite_cache = {}  # Cache loaded sprite sheets
 
     print(f"\nFound {len(card_ids)} card instances")
@@ -362,6 +365,23 @@ def generate_deck_pdf(
             else:
                 cards_without_backs.append(card_info.copy())
 
+                # Collect one copy of each distinct shared back image
+                back_url = sprite_info.get('back_url', '')
+                back_image_path = sprite_info.get('local_back_image', '')
+                if back_url and back_url not in shared_backs_seen and back_image_path:
+                    back_image = Path(back_image_path)
+                    if back_image.exists():
+                        shared_backs_seen.add(back_url)
+                        shared_back_info = {
+                            'card_id': card_id,
+                            'deck_id': deck_id,
+                            'position': 0,
+                            'sprite_path': back_image,
+                            'grid_width': 1,
+                            'grid_height': 1,
+                        }
+                        shared_backs_list.append(shared_back_info)
+
         back_indicator = " (unique back)" if has_unique_back else ""
         print(f"  Deck {deck_id}, Position {position}: {count} copies{back_indicator}")
 
@@ -369,6 +389,7 @@ def generate_deck_pdf(
     print(f"  Cards with unique backs: {len(cards_with_backs)}")
     print(f"  Cards without unique backs: {len(cards_without_backs)}")
     print(f"  Unique backs: {len(backs_list)}")
+    print(f"  Shared backs (distinct): {len(shared_backs_list)}")
 
     # Generate PDFs
     if cards_with_backs:
@@ -402,6 +423,17 @@ def generate_deck_pdf(
             card_height,
             card_spacing,
             is_backs=True  # Enable horizontal mirroring
+        )
+
+    if shared_backs_list:
+        generate_pdf(
+            shared_backs_list,
+            sprite_cache,
+            output_dir / 'complete_deck_shared_backs.pdf',
+            card_width,
+            card_height,
+            card_spacing,
+            is_backs=False
         )
 
 

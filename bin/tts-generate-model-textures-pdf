@@ -1,0 +1,90 @@
+#!/bin/bash
+# tts-generate-model-textures-pdf - Generate PDF from 3D model textures
+# Part of tts-tools unified workflow
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Show help
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [[ -z "$1" ]]; then
+    cat << EOF
+Usage: tts-generate-model-textures-pdf -m <metadata_file> [options]
+
+Generate a PDF with 3D model diffuse textures, one per page.
+
+Options:
+  -m, --metadata FILE     Path to model_texture_metadata.json
+  -o, --output FILE       Output PDF file (default: model_textures.pdf)
+  --no-labels             Don't draw text labels
+  -h, --help              Show this help message
+
+Examples:
+  tts-generate-model-textures-pdf -m model_texture_metadata.json
+  tts-generate-model-textures-pdf -m metadata.json -o output.pdf
+  tts-generate-model-textures-pdf -m metadata.json --no-labels
+
+Output:
+  model_textures.pdf      One texture per page, scaled to fit letter size
+EOF
+    exit 0
+fi
+
+# Convert relative paths to absolute paths and handle default output
+ORIG_DIR="$(pwd)"
+ARGS=()
+HAS_OUTPUT=false
+HAS_METADATA=false
+PREV_ARG=""
+
+for arg in "$@"; do
+    # Check if previous arg was -o or --output
+    if [[ "$PREV_ARG" == "-o" ]] || [[ "$PREV_ARG" == "--output" ]]; then
+        HAS_OUTPUT=true
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    # Check if previous arg was -m or --metadata
+    elif [[ "$PREV_ARG" == "-m" ]] || [[ "$PREV_ARG" == "--metadata" ]]; then
+        HAS_METADATA=true
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    elif [[ -f "$arg" ]] || [[ -d "$arg" ]] || [[ "$arg" == *"/"* ]]; then
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    else
+        ARGS+=("$arg")
+        PREV_ARG="$arg"
+    fi
+done
+
+# If no output was specified, save next to the metadata file
+if [[ "$HAS_OUTPUT" == "false" ]]; then
+    TARGET_DIR="$ORIG_DIR"
+    if [[ "$HAS_METADATA" == "true" ]]; then
+        PREV=""
+        for a in "${ARGS[@]}"; do
+            if [[ "$PREV" == "-m" ]] || [[ "$PREV" == "--metadata" ]]; then
+                TARGET_DIR="$(dirname "$a")"
+                break
+            fi
+            PREV="$a"
+        done
+    fi
+    ARGS+=("-o" "$TARGET_DIR/model_textures.pdf")
+fi
+
+# Run with uv
+cd "$SCRIPT_DIR"
+uv run src/generate_model_textures_pdf.py "${ARGS[@]}"

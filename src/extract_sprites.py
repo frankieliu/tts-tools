@@ -157,11 +157,11 @@ def analyze_sprite_sheet(deck_id: str, info: Dict, base_dir: Path = None) -> Dic
     # Try to find matching image file
     image_file = find_local_image_file(face_url_id, base_dir)
 
-    # Handle unique backs - find the back sprite sheet image
+    # Find the back sprite sheet image (for both unique and shared backs)
     unique_back = info.get('unique_back', False)
     back_image_file = ''
     back_url_id = ''
-    if unique_back and info['back_url']:
+    if info['back_url']:
         back_url_id = extract_filename_from_url(info['back_url'])
         back_image_file = find_local_image_file(back_url_id, base_dir)
 
