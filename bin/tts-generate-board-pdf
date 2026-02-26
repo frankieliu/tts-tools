@@ -1,0 +1,95 @@
+#!/bin/bash
+# tts-generate-board-pdf - Generate multi-page PDF from a board image
+# Part of tts-tools unified workflow
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Show help
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [[ -z "$1" ]]; then
+    cat << EOF
+Usage: tts-generate-board-pdf <image_file> [options]
+       tts-generate-board-pdf -m <tile_metadata.json> [options]
+
+Generate a multi-page PDF from a board image for physical assembly.
+
+Arguments:
+  image_file              Path to board image (PNG/JPG)
+
+Metadata mode:
+  -m, --metadata FILE     Read boards from tile_metadata.json (auto-detect images)
+
+Sizing (pick one approach):
+  --width INCHES          Physical width in inches
+  --height INCHES         Physical height in inches
+  --dpi N                 Derive size from image pixels (default: 300)
+
+Options:
+  -o, --output FILE       Output PDF file (default: board.pdf)
+  --margin INCHES         Page margin (default: 0.5)
+  --overlap INCHES        Overlap between adjacent pages (default: 0)
+  --no-labels             Don't draw assembly text labels
+  --landscape             Force landscape page orientation
+  -h, --help              Show this help message
+
+Examples:
+  tts-generate-board-pdf board.png --width 11 --height 9.8
+  tts-generate-board-pdf board.png --dpi 300 -o board_output.pdf
+  tts-generate-board-pdf -m tile_metadata.json --dpi 150
+  tts-generate-board-pdf board.png --width 20 --overlap 0.25
+
+Output:
+  board.pdf               Multi-page PDF with crop/registration marks
+EOF
+    exit 0
+fi
+
+# Convert relative paths to absolute paths and handle default output
+ORIG_DIR="$(pwd)"
+ARGS=()
+HAS_OUTPUT=false
+HAS_METADATA=false
+PREV_ARG=""
+
+for arg in "$@"; do
+    # Check if previous arg was -o or --output
+    if [[ "$PREV_ARG" == "-o" ]] || [[ "$PREV_ARG" == "--output" ]]; then
+        HAS_OUTPUT=true
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    # Check if previous arg was -m or --metadata
+    elif [[ "$PREV_ARG" == "-m" ]] || [[ "$PREV_ARG" == "--metadata" ]]; then
+        HAS_METADATA=true
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    elif [[ -f "$arg" ]] || [[ -d "$arg" ]] || [[ "$arg" == *"/"* ]]; then
+        # Could be a path, convert to absolute
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    else
+        ARGS+=("$arg")
+        PREV_ARG="$arg"
+    fi
+done
+
+# If no output was specified, save in calling directory
+if [[ "$HAS_OUTPUT" == "false" ]]; then
+    ARGS+=("-o" "$ORIG_DIR/board.pdf")
+fi
+
+# Run with uv
+cd "$SCRIPT_DIR"
+uv run src/generate_board_pdf.py "${ARGS[@]}"

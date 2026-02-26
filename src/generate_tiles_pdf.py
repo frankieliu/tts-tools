@@ -302,6 +302,12 @@ def generate_tiles_pdf(
     page_width, page_height = letter
     margin_pts = margin * inch
 
+    # Available area in inches for portrait and landscape orientations
+    avail_portrait_w = (page_width / inch) - (2 * margin)    # 7.5" on letter
+    avail_portrait_h = (page_height / inch) - (2 * margin)   # 10.0" on letter
+    avail_landscape_w = avail_portrait_h                       # 10.0"
+    avail_landscape_h = avail_portrait_w                       # 7.5"
+
     # Separate small and large items
     small_items = []
     large_items = []
@@ -338,11 +344,47 @@ def generate_tiles_pdf(
                 print(f"  Error loading #{idx}: {e}")
                 continue
 
+            # Determine if this large item should use landscape page orientation
+            # based on the actual image aspect ratio
+            img_w, img_h = item_image.size
+            use_landscape = img_w > img_h
+
+            # For large items, use the image's native aspect ratio instead of
+            # the TTS square scale (which stretches the image). Then fit to page.
+            max_dim = max(width_inches, height_inches)
+            if max_dim >= small_item_threshold and img_w != img_h:
+                img_aspect = img_w / img_h
+                # Recompute dimensions preserving image aspect ratio
+                # Use the larger TTS dimension as the reference size
+                if img_aspect >= 1.0:
+                    # Landscape image: width is the larger dimension
+                    width_inches = max_dim
+                    height_inches = max_dim / img_aspect
+                else:
+                    # Portrait image: height is the larger dimension
+                    height_inches = max_dim
+                    width_inches = max_dim * img_aspect
+
+            # For large items, constrain to the available page area
+            max_dim = max(width_inches, height_inches)
+            if max_dim >= small_item_threshold:
+                if use_landscape:
+                    avail_w, avail_h = avail_landscape_w, avail_landscape_h
+                else:
+                    avail_w, avail_h = avail_portrait_w, avail_portrait_h
+                if width_inches > avail_w or height_inches > avail_h:
+                    scale_down = min(avail_w / width_inches, avail_h / height_inches)
+                    width_inches *= scale_down
+                    height_inches *= scale_down
+                    width_pts = width_inches * inch
+                    height_pts = height_inches * inch
+
             # Add item number and size to info
             item_with_info = item.copy()
             item_with_info['item_number'] = idx
             item_with_info['print_width'] = width_inches
             item_with_info['print_height'] = height_inches
+            item_with_info['use_landscape'] = use_landscape
 
             # Categorize by size
             max_dim = max(width_inches, height_inches)
@@ -392,12 +434,43 @@ def generate_tiles_pdf(
                 print(f"  Error loading #{idx}: {e}")
                 continue
 
+            # Determine if this large item should use landscape page orientation
+            img_w, img_h = item_image.size
+            use_landscape = img_w > img_h
+
+            # For large items, use the image's native aspect ratio instead of
+            # the TTS square scale (which stretches the image). Then fit to page.
+            max_dim = max(width_inches, height_inches)
+            if max_dim >= small_item_threshold and img_w != img_h:
+                img_aspect = img_w / img_h
+                if img_aspect >= 1.0:
+                    width_inches = max_dim
+                    height_inches = max_dim / img_aspect
+                else:
+                    height_inches = max_dim
+                    width_inches = max_dim * img_aspect
+
+            # For large items, constrain to the available page area
+            max_dim = max(width_inches, height_inches)
+            if max_dim >= small_item_threshold:
+                if use_landscape:
+                    avail_w, avail_h = avail_landscape_w, avail_landscape_h
+                else:
+                    avail_w, avail_h = avail_portrait_w, avail_portrait_h
+                if width_inches > avail_w or height_inches > avail_h:
+                    scale_down = min(avail_w / width_inches, avail_h / height_inches)
+                    width_inches *= scale_down
+                    height_inches *= scale_down
+                    width_pts = width_inches * inch
+                    height_pts = height_inches * inch
+
             # Add item number, size, and quantity to info
             item_with_info = item.copy()
             item_with_info['item_number'] = idx
             item_with_info['print_width'] = width_inches
             item_with_info['print_height'] = height_inches
             item_with_info['quantity'] = quantity
+            item_with_info['use_landscape'] = use_landscape
 
             # Categorize by size
             max_dim = max(width_inches, height_inches)
@@ -450,9 +523,19 @@ def generate_tiles_pdf(
         print(f"\nDrawing {len(large_items)} large items...")
 
         for item_info, width_pts, height_pts, item_image in large_items:
+            use_landscape = item_info.get('use_landscape', False)
+
+            # Set page orientation
+            if use_landscape:
+                cur_page_w, cur_page_h = page_height, page_width  # swap for landscape
+                c.setPageSize((cur_page_w, cur_page_h))
+            else:
+                cur_page_w, cur_page_h = page_width, page_height
+                c.setPageSize((cur_page_w, cur_page_h))
+
             # Center on page
-            available_width = page_width - (2 * margin_pts)
-            available_height = page_height - (2 * margin_pts)
+            available_width = cur_page_w - (2 * margin_pts)
+            available_height = cur_page_h - (2 * margin_pts)
 
             x = margin_pts + (available_width - width_pts) / 2
             y = margin_pts + (available_height - height_pts) / 2

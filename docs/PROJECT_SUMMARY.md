@@ -1,5 +1,7 @@
 # TTS Scaling Investigation and Printing Script Enhancement
 
+> **Note:** This is a historical session log documenting the original scaling investigation. The project has evolved significantly since this was written. See [COMPOSITE_DECK_KEYS_AND_TILE_LAYOUT.md](COMPOSITE_DECK_KEYS_AND_TILE_LAYOUT.md) for the latest changes, and [PRINTING_GUIDE.md](PRINTING_GUIDE.md) for current printing instructions.
+
 ## 1. Introduction: What We Were Trying to Find Out
 
 The primary goal of this investigation was to understand how Tabletop Simulator (TTS) handles scaling and display sizing across different game components, and to create accurate printing tools that reproduce physical game pieces at their correct real-world dimensions.
@@ -346,13 +348,16 @@ The validation will be considered successful if:
 ## Appendix: Code Artifacts
 
 ### New Script
-- `src/generate_tiles_pdf_v2.py` - Complete rewrite with correct TTS scaling
+- `src/generate_tiles_pdf_v2.py` - Alternative script with correct TTS scaling (BASE units)
 
 ### Helper Scripts Created During Investigation
 - Metadata path conversion script (for fixing relative → absolute paths)
 
-### Modified/Enhanced Scripts
-- None (kept original scripts intact, created new v2 instead)
+### Modified/Enhanced Scripts (since this investigation)
+- `src/extract_sprites.py` - Composite deck keys (`deck_id:face_url_id`) to handle same deck ID mapping to multiple sprite sheets
+- `src/generate_deck_from_json.py` - Per-card FaceURL tracking, composite key lookup with fallbacks
+- `src/generate_tiles_pdf.py` - Auto scale detection, small item packing, landscape rotation, image aspect ratio preservation, page-aware constraining
+- `src/generate_board_pdf.py` - New script for multi-page board printing
 
 ---
 

@@ -68,9 +68,12 @@ tts-extract-tiles Workshop/*.json -o tile_metadata.json
 - Create one-per-page layout with crop marks
 
 **Key Features:**
-- Configurable scale factor (default: 1.0 TTS unit = 1 inch)
+- Configurable scale factor (default: auto-detect from card decks in the mod)
 - Maximum size constraint to prevent oversized prints
-- Automatic orientation selection (portrait/landscape)
+- Page-aware constraining (items always fit within page margins)
+- Automatic landscape page rotation for wide images
+- Image aspect ratio preservation for large items
+- Small item packing (multiple per page)
 - Crop marks for cutting
 - Size labels on each page
 - Handles PNG transparency
@@ -87,9 +90,19 @@ if width_inches > max_size or height_inches > max_size:
     width_inches *= scale_down
     height_inches *= scale_down
 
-# Further constrain to page size if needed
-available_width = 7.5" (portrait) or 10" (landscape)
-available_height = 10" (portrait) or 7.5" (landscape)
+# For large items, use image's native aspect ratio
+# (prevents TTS stretch:true from forcing square output)
+if image_width > image_height:
+    # Landscape: use image aspect ratio
+    width_inches = max_dim
+    height_inches = max_dim / (image_width / image_height)
+
+# Constrain to available page area
+# Portrait: 7.5" × 10", Landscape: 10" × 7.5"
+if width_inches > avail_w or height_inches > avail_h:
+    scale_down = min(avail_w / width_inches, avail_h / height_inches)
+    width_inches *= scale_down
+    height_inches *= scale_down
 ```
 
 **Usage:**
@@ -189,19 +202,15 @@ tts-generate-tiles-pdf Workshop/*.json --boards-only -o game_boards.pdf
 
 1. **No Absolute Size Information:**
    - TTS only provides relative scale
-   - Users must experiment with scale_factor
-   - Different mods may require different scale factors
+   - Auto-detection from card decks usually provides the correct scale factor
+   - Different mods may require manual `--scale-factor` override
 
-2. **Single Item Per Page:**
-   - Current implementation: one tile per page
-   - Future: could add grid layout for small tiles
+2. **Page Size:**
+   - Limited to US Letter (8.5" x 11")
+   - Large items are constrained to available page area
+   - For items that need to span multiple pages, use `tts-generate-board-pdf`
 
-3. **Page Size Constraints:**
-   - Limited to US Letter (8.5" × 11")
-   - Very large items must be scaled down
-   - Future: could add poster mode (multi-page)
-
-4. **2D Only:**
+3. **2D Only:**
    - Only handles Custom_Tile and Custom_Board
    - Cannot extract textures from Custom_Model objects
 
@@ -230,22 +239,29 @@ The tile extraction tools follow the same patterns as card extraction:
 - `tts-pipeline` currently only handles cards
 - Future: could add `--include-tiles` flag to pipeline
 
+## Implemented Features (since initial release)
+
+The following features have been added since the initial implementation:
+
+1. **Small Item Packing:** Multiple small items packed onto shared pages (items < 4" threshold)
+2. **Automatic Scale Detection:** Scale factor auto-detected from card decks in the mod
+3. **Multi-Page Board Printing:** `tts-generate-board-pdf` splits large items across multiple pages
+4. **Landscape Page Rotation:** Large items with landscape images printed on landscape pages
+5. **Image Aspect Ratio Preservation:** Large items use native image aspect ratio instead of TTS square scale
+6. **Page-Aware Constraining:** Items constrained to available page area, not just a fixed max_size
+7. **No-Grouping Default:** All duplicate items printed individually by default; `--group` flag to group
+
 ## Future Enhancements
 
-### High Priority
-1. **Grid Layout:** Multiple small tiles per page
-2. **Automatic Scale Detection:** Use card sizes as reference
-3. **Pipeline Integration:** Add tiles to tts-pipeline
-
 ### Medium Priority
-4. **Poster Mode:** Split large items across multiple pages
-5. **Custom Page Sizes:** Support for different paper sizes
-6. **Batch Processing:** Process multiple mods at once
+1. **Custom Page Sizes:** Support for different paper sizes (A4, legal, tabloid)
+2. **Pipeline Integration:** Add tiles to `tts-pipeline`
+3. **Batch Processing:** Process multiple mods at once
 
 ### Low Priority
-7. **Custom_Model Support:** Extract textures from 3D models
-8. **Interactive Sizing:** Preview before generating PDF
-9. **Print Optimization:** Minimize paper waste
+4. **Custom_Model Support:** Extract textures from 3D models
+5. **Interactive Sizing:** Preview before generating PDF
+6. **Print Optimization:** Minimize paper waste
 
 ## Success Metrics
 

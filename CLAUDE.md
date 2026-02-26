@@ -1,40 +1,157 @@
-# Claude Custom Instructions Template
+# TTS Tools - Claude Instructions
 
-## Instructions for Claude
+## Global Custom Instructions
 
-Before proceeding with any task, please check for relevant custom instructions in:
+Before proceeding with any task, check for relevant custom instructions in:
 
 ```
 ~/Documents/Admin/apps/claude/custom-instructions/
 ```
 
-## How to Use Custom Instructions
-
-1. **Check for relevant instructions**: Look for markdown files in the custom-instructions directory that relate to the current task
-2. **Read and follow**: If a relevant instruction file exists, read it carefully and follow the guidelines provided
-3. **Apply context-aware**: Use the custom instructions when they're relevant to the task at hand
-4. **Ask if unclear**: If custom instructions conflict with the request or are unclear, ask for clarification
-
-## Available Custom Instructions
-
-Check the custom-instructions directory for files like:
+Key instructions:
 - `shell-command-aliases.md` - **CRITICAL:** Always use -f flag with rm, cp, mv commands
-- `stealth-fetch.md` - Web fetching tool for Cloudflare-protected sites
 - `python-uv-usage.md` - Always use UV for Python package management and script execution
-- `mermaid_code_formatting_guide.md` - Mermaid diagram formatting guidelines
-- Add more custom instruction files as needed
+- `stealth-fetch.md` - Web fetching tool for Cloudflare-protected sites
 
-## Example Usage
+## TTS Tools Overview
 
-When you need to fetch a web page and encounter bot protection:
-1. Check `stealth-fetch.md` for the stealth-fetch tool instructions
-2. Follow the usage patterns documented in that file
-3. Use the tool as specified in the custom instructions
+This project provides CLI tools for downloading Tabletop Simulator (TTS) Workshop mods and generating printable PDFs of cards, tiles, and boards.
 
-## Adding New Custom Instructions
+**IMPORTANT:** When the user gives you a Steam Workshop URL or ID (e.g. `https://steamcommunity.com/sharedfiles/filedetails/?id=XXXXXXX`) and asks to download it, generate PDFs, or print the board/cards/tiles — use the tools documented below. Do NOT try to scrape the page or download files manually.
 
-To add new custom instructions:
-1. Create a new `.md` file in `~/Documents/Admin/apps/claude/custom-instructions/`
-2. Document the tool, workflow, or guideline clearly
-3. Include usage examples and common scenarios
-4. Update this template if needed to reference the new instruction file
+## Tool Location
+
+Tools are in `bin/` under this project root. They are **not** on PATH, so always use the full path:
+
+```
+/Users/frankliu/Projects/bg/tts-tools/bin/tts-download
+/Users/frankliu/Projects/bg/tts-tools/bin/tts-deserialize
+/Users/frankliu/Projects/bg/tts-tools/bin/tts-assets
+/Users/frankliu/Projects/bg/tts-tools/bin/tts-extract-sprites
+/Users/frankliu/Projects/bg/tts-tools/bin/tts-extract-tiles
+/Users/frankliu/Projects/bg/tts-tools/bin/tts-generate-pdf
+/Users/frankliu/Projects/bg/tts-tools/bin/tts-generate-tiles-pdf
+/Users/frankliu/Projects/bg/tts-tools/bin/tts-generate-board-pdf
+/Users/frankliu/Projects/bg/tts-tools/bin/tts-pipeline
+```
+
+All bin scripts handle `uv` and virtualenv activation internally — just call them directly.
+
+## Complete Workflow
+
+When asked to process a TTS Workshop mod, run these steps in order. Use `TTS_BIN` as shorthand below for `/Users/frankliu/Projects/bg/tts-tools/bin`.
+
+### Step 1: Download the mod
+
+```bash
+mkdir -p /path/to/output_dir
+$TTS_BIN/tts-download <workshop_id_or_url> -o /path/to/output_dir
+```
+
+Output: `<id>_<name>.tts`, `<id>_<name>.json`, `<id>_<name>_preview.jpg`
+
+### Step 2: Deserialize
+
+```bash
+$TTS_BIN/tts-deserialize "/path/to/output_dir/<id>_<name>.tts"
+```
+
+Output: `<id>_<name>.deserialized.json`
+
+### Step 3: Download assets
+
+```bash
+$TTS_BIN/tts-assets "/path/to/output_dir/<id>_<name>.deserialized.json"
+```
+
+Output: `<id>_<name>.deserialized/` directory with `Images/`, `Models/`, `Workshop/` subdirectories.
+
+### Step 4: Extract metadata and generate PDFs
+
+After step 3, `cd` into the `.deserialized/` directory. Then run **both** extractors to see what the mod contains:
+
+```bash
+cd /path/to/output_dir/<id>_<name>.deserialized
+$TTS_BIN/tts-extract-tiles Workshop/*.json
+$TTS_BIN/tts-extract-sprites Workshop/*.json
+```
+
+`tts-extract-tiles` prints a summary like: "Found X tile(s), Y board(s), and Z token(s)". `tts-extract-sprites` prints what card decks were found. Use this output to decide which PDF generators to run:
+
+#### If cards were found:
+
+```bash
+$TTS_BIN/tts-generate-pdf Workshop/*.json
+```
+
+Outputs: `complete_deck_faces_with_backs.pdf`, `complete_deck_faces_no_backs.pdf`, `complete_deck_backs.pdf`
+
+#### If tiles were found (small items packed, large items one per page):
+
+```bash
+$TTS_BIN/tts-generate-tiles-pdf Workshop/*.json
+```
+
+Output: `tiles_and_boards.pdf`
+
+Scale factor is auto-detected from card decks. Large items with landscape images are automatically rotated to landscape pages. All duplicate items are printed individually by default; use `--group` to group duplicates.
+
+#### If boards were found (large items, split across pages):
+
+```bash
+$TTS_BIN/tts-generate-board-pdf -m tile_metadata.json
+```
+
+Output: `board.pdf` — board image split across multiple letter-sized pages for assembly.
+
+Options:
+- `--dpi N` - Control physical size (default: 125). Lower DPI = larger print.
+- `--width INCHES` / `--height INCHES` - Set explicit physical dimensions instead of DPI
+- `--overlap INCHES` - Overlap between adjacent pages for easier assembly
+- `--no-labels` - Omit assembly labels
+
+#### If the mod has a mix of components
+
+Run all applicable generators. Most board game mods have cards + tiles + boards.
+
+### One-command pipeline (cards only)
+
+For card-only mods, the pipeline handles steps 1-4 automatically:
+
+```bash
+$TTS_BIN/tts-pipeline <workshop_id_or_url> -o /path/to/output_dir
+```
+
+This does NOT generate tiles or board PDFs — only card deck PDFs.
+
+## Quick Reference
+
+| Mod contains | Extract tool | PDF tool | Output |
+|---|---|---|---|
+| Card decks | `tts-extract-sprites` | `tts-generate-pdf` | 3 deck PDFs |
+| Tiles (small) | `tts-extract-tiles` | `tts-generate-tiles-pdf` | `tiles_and_boards.pdf` |
+| Boards (large) | `tts-extract-tiles` | `tts-generate-board-pdf` | `board.pdf` |
+
+## Output Directory Structure
+
+```
+<id>_<name>.deserialized/
+├── Images/                              # Downloaded images
+├── Models/                              # Downloaded 3D models
+├── Assetbundles/                        # Downloaded asset bundles
+├── Workshop/
+│   └── <id>_<name>.deserialized.json   # TTS mod JSON
+├── sprite_metadata.json                 # Card metadata (from tts-extract-sprites, uses composite keys)
+├── tile_metadata.json                   # Tile/board metadata (from tts-extract-tiles)
+├── complete_deck_faces_with_backs.pdf   # Card faces with unique backs
+├── complete_deck_faces_no_backs.pdf     # Card faces without unique backs
+├── complete_deck_backs.pdf              # Card backs (mirrored)
+├── tiles_and_boards.pdf                 # Small items packed, large items one-per-page
+└── board.pdf                            # Large board split across pages
+```
+
+## Notes
+
+- Use `--no-verify` flag on download/assets steps if SSL errors occur
+- Board game mods are typically stored under `~/Projects/bg/<game_name>/`
+- When the user says "print the board" they mean generate the board PDF and open it with `open board.pdf`

@@ -1,5 +1,7 @@
 # Updated Printing Script with Correct TTS Scaling
 
+> **Note:** This document describes `generate_tiles_pdf_v2.py`, an alternative/experimental script that uses BASE unit constants derived from real-world measurements. The **primary** tile PDF tool used by `tts-generate-tiles-pdf` is `generate_tiles_pdf.py`, which uses auto-detected scale factors from card decks. For multi-page board printing, use `tts-generate-board-pdf` (`src/generate_board_pdf.py`).
+
 ## What's New
 
 The updated `generate_tiles_pdf_v2.py` script now uses the **correct TTS scaling formula** derived from real-world measurements:

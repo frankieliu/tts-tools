@@ -23,6 +23,7 @@ class TTSDeserializer:
     TYPE_OBJECT = 0x03
     TYPE_ARRAY = 0x04
     TYPE_BOOL = 0x08
+    TYPE_NULL_ENTRY = 0x0a  # Null entry in object-style arrays (BSON-like)
     TYPE_INT = 0x10
     TYPE_INT64 = 0x12  # 64-bit integer (used for OwnerSteamID, etc.)
 
@@ -100,7 +101,7 @@ class TTSDeserializer:
     def read_value(self, type_marker: int, depth: int = 0) -> Any:
         """Read value based on type marker"""
 
-        if type_marker == self.TYPE_NULL:
+        if type_marker == self.TYPE_NULL or type_marker == self.TYPE_NULL_ENTRY:
             return None
 
         elif type_marker == self.TYPE_STRING:
@@ -194,7 +195,7 @@ class TTSDeserializer:
         is_object_style = False
         if self.pos < array_end_pos:
             first_byte = self.data[self.pos]
-            if first_byte in [0x01, 0x02, 0x03, 0x04, 0x08, 0x10]:
+            if first_byte in [0x01, 0x02, 0x03, 0x04, 0x08, 0x0a, 0x10, 0x12]:
                 # Check if next bytes look like a string key
                 if self.pos + 1 < array_end_pos:
                     next_bytes = self.data[self.pos + 1:self.pos + 5]

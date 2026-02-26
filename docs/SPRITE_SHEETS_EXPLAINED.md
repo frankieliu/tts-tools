@@ -34,6 +34,12 @@ Each sprite sheet is defined in a `CustomDeck` object within the TTS JSON:
 }
 ```
 
+### Important: Same Deck ID, Different Sprite Sheets
+
+A single deck ID (e.g. `17`) can appear in multiple card objects, each pointing to a **different** FaceURL with different grid sizes. For example, in the Earthborne Rangers mod, deck 17 maps to 5 different sprite sheets (4x4, 1x1, 5x5, 8x5, 1x1 grids).
+
+To handle this, `extract_sprites.py` uses **composite keys** of the form `"deck_id:face_url_hash"` (e.g. `"17:818FC395FAB1047D..."`) instead of plain deck IDs. Each unique (deck_id, FaceURL) combination gets its own entry in `sprite_metadata.json`.
+
 ### CustomDeck Fields
 
 | Field | Type | Description |
@@ -131,7 +137,7 @@ Once you know the row and column, calculate pixel coordinates to crop the card i
 
 ### Extraction Algorithm
 
-**From generate_deck_from_json.py:54-97**
+**From generate_deck_from_json.py:84-127**
 
 ```python
 def extract_card_from_sprite_sheet(
@@ -416,25 +422,43 @@ A `Deck` object contains multiple cards stacked together:
 
 ## Counting Card Instances
 
-**From generate_deck_from_json.py:20-51:**
+**From generate_deck_from_json.py:26-81:**
 
 ```python
 def extract_card_ids_from_json(json_file: Path) -> list:
     """
     Extract all card instances from TTS JSON.
-    Returns list of CardIDs (with duplicates).
+    Returns list of (card_id, face_url_id) tuples.
     """
     card_ids = []
 
     def traverse(obj):
         if isinstance(obj, dict):
             # Deck with multiple cards
-            if 'DeckIDs' in obj:
-                card_ids.extend(obj['DeckIDs'])
+            if 'DeckIDs' in obj and 'CustomDeck' in obj:
+                custom_deck = obj['CustomDeck']
+                deck_face_map = {}
+                for deck_id_str, deck_info in custom_deck.items():
+                    face_url = deck_info.get('FaceURL', '')
+                    deck_face_map[deck_id_str] = extract_filename_from_url(face_url)
+
+                for card_id in obj['DeckIDs']:
+                    card_deck_id = str(card_id // 100)
+                    face_url_id = deck_face_map.get(card_deck_id, '')
+                    if not face_url_id and deck_face_map:
+                        face_url_id = next(iter(deck_face_map.values()))
+                    card_ids.append((card_id, face_url_id))
 
             # Single card
             elif 'CardID' in obj and 'CustomDeck' in obj:
-                card_ids.append(obj['CardID'])
+                card_id = obj['CardID']
+                card_deck_id = str(card_id // 100)
+                deck_info = obj['CustomDeck'].get(card_deck_id, {})
+                if not deck_info and obj['CustomDeck']:
+                    deck_info = next(iter(obj['CustomDeck'].values()))
+                face_url = deck_info.get('FaceURL', '')
+                face_url_id = extract_filename_from_url(face_url)
+                card_ids.append((card_id, face_url_id))
 
             # Recurse
             for value in obj.values():
@@ -448,11 +472,13 @@ def extract_card_ids_from_json(json_file: Path) -> list:
     return card_ids
 ```
 
+Each card is returned as a `(card_id, face_url_id)` tuple. The `face_url_id` is the hash from the card's FaceURL, used to construct the composite key for sprite sheet lookup.
+
 **Example output:**
 ```python
-card_ids = [2500, 2501, 2501, 2501, 2502, 2537]
-#                    ↑     ↑     ↑
-#                    Three copies of card 2501
+card_ids = [(2500, 'ABC123'), (2501, 'ABC123'), (2501, 'ABC123'), (2502, 'ABC123')]
+#                                ↑                ↑
+#                          Two copies of card 2501
 ```
 
 **Counting duplicates:**
@@ -460,7 +486,7 @@ card_ids = [2500, 2501, 2501, 2501, 2502, 2537]
 from collections import Counter
 
 card_counts = Counter(card_ids)
-# Result: {2500: 1, 2501: 3, 2502: 1, 2537: 1}
+# Result: {(2500, 'ABC123'): 1, (2501, 'ABC123'): 2, (2502, 'ABC123'): 1}
 ```
 
 This tells you how many copies of each card to print.
@@ -472,16 +498,17 @@ This tells you how many copies of each card to print.
 **Located in:** `src/extract_sprites.py`
 
 **Key functions:**
-- `find_sprite_sheets()` - Recursively find all CustomDeck definitions (lines 29-123)
-- `extract_filename_from_url()` - Get image filename from URL (line 22)
-- `find_local_image_file()` - Find downloaded sprite sheet (lines 186-212)
+- `find_sprite_sheets()` - Recursively find all CustomDeck definitions, keyed by composite `deck_id:face_url_id` (lines 29-127)
+- `extract_filename_from_url()` - Get image filename hash from URL (line 22)
+- `find_local_image_file()` - Find downloaded sprite sheet (lines 190-216)
 
 **Located in:** `src/generate_deck_from_json.py`
 
 **Key functions:**
-- `extract_card_ids_from_json()` - Get all card instances (lines 20-51)
-- `extract_card_from_sprite_sheet()` - Crop card from sprite (lines 54-97)
-- `draw_card_with_marks()` - Draw card with crop marks (lines 100+)
+- `extract_filename_from_url()` - Get image filename hash from URL (lines 20-23)
+- `extract_card_ids_from_json()` - Get all card instances as `(card_id, face_url_id)` tuples (lines 26-81)
+- `extract_card_from_sprite_sheet()` - Crop card from sprite (lines 84-127)
+- `draw_card_with_marks()` - Draw card with crop marks (lines 130-163)
 
 ## Summary
 
@@ -498,19 +525,20 @@ This tells you how many copies of each card to print.
 
 - **No per-card transforms** affect extraction or print size
 - **CardID is the key** to finding cards in sprite sheets
+- **Composite keys** (`deck_id:face_url_hash`) disambiguate when the same deck ID maps to multiple sprite sheets
 - **Grid position** uses row-major order (left-to-right, top-to-bottom)
 - **Transform.scale** affects TTS display, not printing
 - **UniqueBack** enables double-sided printing with unique backs
-- **Card print size is fixed** at 2.5" × 3.5" (not affected by `--scale-factor`)
+- **Card print size is fixed** at 2.5" x 3.5" (not affected by `--scale-factor`)
 
 ### Workflow
 
 ```bash
 # 1. Extract sprite sheet metadata
-python src/extract_sprites.py Workshop/game.json -o sprite_metadata.json
+tts-extract-sprites Workshop/game.json -o sprite_metadata.json
 
-# 2. Generate card PDFs (uses 2.5" × 3.5" fixed size)
-python src/generate_deck_from_json.py Workshop/game.json -o cards.pdf
+# 2. Generate card PDFs (uses 2.5" x 3.5" fixed size)
+tts-generate-pdf Workshop/game.json
 
 # Result: Print-ready PDF with all cards at poker size
 ```

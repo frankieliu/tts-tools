@@ -53,14 +53,16 @@ def find_sprite_sheets(data: Any, sprite_info: Dict = None) -> Dict:
             # Process each CustomDeck reference
             for deck_id_str, deck_info in data['CustomDeck'].items():
                 face_url = deck_info.get('FaceURL', '')
+                face_url_id = extract_filename_from_url(face_url)
+                composite_key = f"{deck_id_str}:{face_url_id}"
 
                 # Calculate grid position from CardID
                 # CardID format: DDDPP where DDD is deck ID, PP is position
                 grid_position = card_id % 100
 
                 # Store deck information
-                if not sprite_info[deck_id_str]['face_url']:
-                    sprite_info[deck_id_str].update({
+                if not sprite_info[composite_key]['face_url']:
+                    sprite_info[composite_key].update({
                         'face_url': face_url,
                         'back_url': deck_info.get('BackURL', ''),
                         'num_width': deck_info.get('NumWidth', 0),
@@ -70,8 +72,8 @@ def find_sprite_sheets(data: Any, sprite_info: Dict = None) -> Dict:
                     })
 
                 # Record this card position
-                sprite_info[deck_id_str]['card_positions'].add(grid_position)
-                sprite_info[deck_id_str]['card_nicknames'][grid_position] = nickname
+                sprite_info[composite_key]['card_positions'].add(grid_position)
+                sprite_info[composite_key]['card_nicknames'][grid_position] = nickname
 
         # Check if this is a deck object with DeckIDs array and CustomDeck
         elif 'DeckIDs' in data and 'CustomDeck' in data:
@@ -80,10 +82,12 @@ def find_sprite_sheets(data: Any, sprite_info: Dict = None) -> Dict:
             # Process each CustomDeck reference
             for deck_id_str, deck_info in data['CustomDeck'].items():
                 face_url = deck_info.get('FaceURL', '')
+                face_url_id = extract_filename_from_url(face_url)
+                composite_key = f"{deck_id_str}:{face_url_id}"
 
                 # Store deck information
-                if not sprite_info[deck_id_str]['face_url']:
-                    sprite_info[deck_id_str].update({
+                if not sprite_info[composite_key]['face_url']:
+                    sprite_info[composite_key].update({
                         'face_url': face_url,
                         'back_url': deck_info.get('BackURL', ''),
                         'num_width': deck_info.get('NumWidth', 0),
@@ -102,13 +106,13 @@ def find_sprite_sheets(data: Any, sprite_info: Dict = None) -> Dict:
                     card_deck_id = str(card_id // 100)
                     if card_deck_id == deck_id_str:
                         # Record this card position
-                        sprite_info[deck_id_str]['card_positions'].add(grid_position)
+                        sprite_info[composite_key]['card_positions'].add(grid_position)
                         # Try to find nickname from ContainedObjects if available
                         if 'ContainedObjects' in data:
                             for obj in data['ContainedObjects']:
                                 if obj.get('CardID') == card_id:
                                     nickname = obj.get('Nickname', '')
-                                    sprite_info[deck_id_str]['card_nicknames'][grid_position] = nickname
+                                    sprite_info[composite_key]['card_nicknames'][grid_position] = nickname
                                     break
 
         # Recursively process all dict values

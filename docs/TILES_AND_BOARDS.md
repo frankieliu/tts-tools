@@ -99,6 +99,9 @@ tts-generate-tiles-pdf <json_file> [options]
 - `--max-size N` - Maximum dimension in inches (default: 10.0)
 - `--tiles-only` - Generate only tiles (ignore boards)
 - `--boards-only` - Generate only boards (ignore tiles)
+- `--tokens-only` - Generate only tokens
+- `--no-labels` - Do not draw text labels
+- `--group` - Group duplicate items (default: print all copies individually)
 
 **Auto-Detection:**
 By default, the tool automatically detects the correct scale factor by analyzing card decks in the mod. It assumes standard poker card dimensions (88mm height) and calculates the appropriate scale factor. You can override this with `--scale-factor` if needed.
@@ -146,10 +149,12 @@ tts-generate-tiles-pdf Workshop/*.json
 ### Output Format
 
 The PDF contains:
-- **One item per page**
+- **Small items** (< 4"): Packed together on shared pages
+- **Large items** (>= 4"): One item per page
 - **Crop marks** for cutting
-- **Size label** showing dimensions (e.g., "Player Board (6.0" × 6.0")")
-- **Automatic orientation** - landscape for wide items, portrait for tall items
+- **Size label** showing dimensions (e.g., "Player Board (6.0" x 6.0")")
+- **Automatic landscape rotation** for large items with landscape images
+- **Image aspect ratio preservation** for large items
 - **Centered** on page with margins
 
 ## Scale Factor Guide
@@ -266,21 +271,31 @@ tts-generate-tiles-pdf Workshop/*.json --scale-factor 3.78
 3. **Large items** - may need to be printed on multiple pages or at poster size
 4. **3D models** - only 2D tiles/boards supported, not Custom_Model objects
 
+## Implemented Enhancements
+
+The following have been implemented since the initial version:
+- Multi-page printing for large items via `tts-generate-board-pdf`
+- Automatic scale detection based on card sizes (default behavior)
+- Small item packing (multiple tokens/small tiles per page)
+- Landscape page rotation for wide images
+- Image aspect ratio preservation for large items
+
 ## Future Improvements
 
 Potential enhancements:
-- Multi-page printing for large items (poster mode)
-- Automatic scale detection based on card sizes
-- Grid layout (multiple small tiles per page)
-- Customizable crop marks and labels
+- Custom page sizes (A4, legal, tabloid)
 - Support for Custom_Model textures
+- Pipeline integration for tiles
 
 ---
 
 ## Summary
 
 - TTS uses **relative scale**, not absolute measurements
-- Use **cards as reference** (scale 1.0 ≈ 2.5")
-- **Experiment with scale-factor** to get desired print size
-- **Use max-size** to prevent oversized items
-- Each item prints on **separate page** with crop marks
+- Scale factor is **auto-detected** from card decks by default
+- Use **`--scale-factor`** to override if auto-detection isn't appropriate
+- Use **`--max-size`** to prevent oversized items
+- **Small items** are packed onto shared pages
+- **Large items** get one per page with automatic landscape rotation
+- Use **`--group`** to group duplicates (default prints all copies)
+- For large boards spanning multiple pages, use `tts-generate-board-pdf`

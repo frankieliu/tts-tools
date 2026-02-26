@@ -17,10 +17,17 @@ from reportlab.pdfgen import canvas as pdf_canvas
 from reportlab.lib.utils import ImageReader
 from collections import Counter
 
+def extract_filename_from_url(url: str) -> str:
+    """Extract the last part of URL (typically the hash) for identification."""
+    url = url.rstrip('/')
+    return url.split('/')[-1]
+
+
 def extract_card_ids_from_json(json_file: Path) -> list:
     """
     Extract all card instances from the TTS JSON file with full CardIDs.
-    Returns a list of CardIDs (e.g., [801, 803, 803, 501, ...]).
+    Returns a list of (card_id, face_url_id) tuples, e.g. [(801, 'ABC123'), ...].
+    The face_url_id is derived from each card's CustomDeck FaceURL.
     """
     with open(json_file) as f:
         data = json.load(f)
@@ -31,12 +38,35 @@ def extract_card_ids_from_json(json_file: Path) -> list:
         """Recursively traverse to find all cards."""
         if isinstance(obj, dict):
             # Check for DeckIDs array (multiple cards in a deck)
-            if 'DeckIDs' in obj:
-                card_ids.extend(obj['DeckIDs'])
+            if 'DeckIDs' in obj and 'CustomDeck' in obj:
+                custom_deck = obj['CustomDeck']
+                # Build a map from deck_id_str -> face_url_id for this object
+                deck_face_map = {}
+                for deck_id_str, deck_info in custom_deck.items():
+                    face_url = deck_info.get('FaceURL', '')
+                    deck_face_map[deck_id_str] = extract_filename_from_url(face_url)
+
+                for card_id in obj['DeckIDs']:
+                    card_deck_id = str(card_id // 100)
+                    face_url_id = deck_face_map.get(card_deck_id, '')
+                    # If the CardID-derived deck ID doesn't match any CustomDeck key,
+                    # fall back to the first (usually only) CustomDeck entry
+                    if not face_url_id and deck_face_map:
+                        face_url_id = next(iter(deck_face_map.values()))
+                    card_ids.append((card_id, face_url_id))
 
             # Check for single CardID
             elif 'CardID' in obj and 'CustomDeck' in obj:
-                card_ids.append(obj['CardID'])
+                card_id = obj['CardID']
+                card_deck_id = str(card_id // 100)
+                custom_deck = obj['CustomDeck']
+                deck_info = custom_deck.get(card_deck_id, {})
+                # If the CardID-derived deck ID doesn't match, use the first entry
+                if not deck_info and custom_deck:
+                    deck_info = next(iter(custom_deck.values()))
+                face_url = deck_info.get('FaceURL', '')
+                face_url_id = extract_filename_from_url(face_url)
+                card_ids.append((card_id, face_url_id))
 
             # Recurse into all dict values
             for value in obj.values():
@@ -276,16 +306,30 @@ def generate_deck_pdf(
     # Group cards by deck for reporting
     card_counter = Counter(card_ids)
 
-    for card_id, count in sorted(card_counter.items()):
+    for (card_id, face_url_id), count in sorted(card_counter.items()):
         deck_id = card_id // 100
         position = card_id % 100
         deck_id_str = str(deck_id)
+        composite_key = f"{deck_id_str}:{face_url_id}"
 
-        if deck_id_str not in sprite_sheets:
-            print(f"  WARNING: Deck {deck_id} (CardID {card_id}): Not found in sprite metadata")
-            continue
+        if composite_key not in sprite_sheets:
+            # The CardID-derived deck ID may differ from the CustomDeck key in TTS.
+            # Fall back to searching by face_url_id across all sprite sheets.
+            found = False
+            for key, info in sprite_sheets.items():
+                if info.get('face_url_id') == face_url_id:
+                    composite_key = key
+                    found = True
+                    break
+            if not found:
+                # Fall back to plain deck_id for backward compatibility with old metadata
+                if deck_id_str in sprite_sheets:
+                    composite_key = deck_id_str
+                else:
+                    print(f"  WARNING: Deck {deck_id} (CardID {card_id}): Not found in sprite metadata")
+                    continue
 
-        sprite_info = sprite_sheets[deck_id_str]
+        sprite_info = sprite_sheets[composite_key]
         local_image = Path(sprite_info['local_image'])
 
         if not local_image.exists():
