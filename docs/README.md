@@ -23,9 +23,20 @@ All tools are in `bin/` and handle virtualenv/uv internally.
 | `tts-generate-pdf` | Generate card deck PDFs (faces, backs) |
 | `tts-generate-tiles-pdf` | Generate tiles/tokens PDF |
 | `tts-generate-board-pdf` | Generate multi-page board PDF |
+| `tts-mod` | **Full pipeline: URL → directory → all PDFs** |
 | `tts-pipeline` | One-command pipeline (cards only) |
 
 ## Quick Start
+
+```bash
+# One command — auto-creates ~/Projects/bg/<game_name>/ and generates all PDFs
+bin/tts-mod "https://steamcommunity.com/sharedfiles/filedetails/?id=XXXXXXX"
+
+# Override directory name
+bin/tts-mod 2846396687 -n life_amazonia
+```
+
+## Manual Step-by-Step
 
 ```bash
 # Download and process a mod
@@ -55,6 +66,7 @@ tts-tools/
 │   ├── tts-generate-pdf
 │   ├── tts-generate-tiles-pdf
 │   ├── tts-generate-board-pdf
+│   ├── tts-mod
 │   └── tts-pipeline
 ├── src/                    # Python source files
 │   ├── extract_sprites.py
@@ -93,6 +105,7 @@ After processing a mod:
 
 ## Documentation
 
+- [WORKFLOW.md](WORKFLOW.md) — Complete workflow guide (tts-mod and manual steps)
 - [SPRITE_SHEETS_EXPLAINED.md](SPRITE_SHEETS_EXPLAINED.md) — How TTS card sprite sheets work
 - [TILES_AND_BOARDS.md](TILES_AND_BOARDS.md) — Tile/board extraction and scaling
 - [PRINTING_GUIDE.md](PRINTING_GUIDE.md) — Printing tiles, boards, and tokens

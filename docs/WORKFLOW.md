@@ -1,10 +1,39 @@
 # TTS Tools Workflow
 
-## Prerequisites
+## Quick Start: tts-mod (recommended)
+
+One command to go from a Steam Workshop URL to printable PDFs:
+
+```bash
+TTS_BIN=/Users/frankliu/Projects/bg/tts-tools/bin
+
+# Auto-creates ~/Projects/bg/<game_name>/ from the mod title
+$TTS_BIN/tts-mod "https://steamcommunity.com/sharedfiles/filedetails/?id=XXXXXXX"
+
+# Override directory name
+$TTS_BIN/tts-mod 2846396687 -n life_amazonia
+
+# Override full output path
+$TTS_BIN/tts-mod 2846396687 -o /tmp/my_mod
+```
+
+This handles everything: queries Steam for the title, creates the directory, downloads the mod, deserializes, fetches assets, extracts metadata, and generates all applicable PDFs (cards, tiles, boards).
+
+Options:
+- `-n, --name NAME` — override the auto-generated directory name
+- `-o, --output-dir DIR` — override the full output path
+- `--no-verify` — skip SSL certificate verification
+- `--card-width`, `--card-height`, `--card-spacing` — card sizing overrides
+
+## Manual Step-by-Step
+
+Use individual tools when you need fine-grained control.
+
+### Prerequisites
 
 Download and prepare the mod (steps 1-3), then generate PDFs (step 4).
 
-## From Scratch
+### From Scratch
 
 ```bash
 TTS_BIN=/Users/frankliu/Projects/bg/tts-tools/bin

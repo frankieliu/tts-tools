@@ -17,7 +17,18 @@ Key instructions:
 
 This project provides CLI tools for downloading Tabletop Simulator (TTS) Workshop mods and generating printable PDFs of cards, tiles, and boards.
 
-**IMPORTANT:** When the user gives you a Steam Workshop URL or ID (e.g. `https://steamcommunity.com/sharedfiles/filedetails/?id=XXXXXXX`) and asks to download it, generate PDFs, or print the board/cards/tiles — use the tools documented below. Do NOT try to scrape the page or download files manually.
+**IMPORTANT:** When the user gives you a Steam Workshop URL or ID (e.g. `https://steamcommunity.com/sharedfiles/filedetails/?id=XXXXXXX`) and asks to download it, generate PDFs, or print the board/cards/tiles — **always use `tts-mod` as the first choice**. It handles everything automatically: creates `~/Projects/bg/<game_name>/`, downloads, deserializes, fetches assets, extracts metadata, and generates all PDFs (cards, tiles, boards). Only fall back to individual tools if the user needs fine-grained control over a specific step.
+
+```bash
+# DEFAULT: Use tts-mod for any Workshop URL
+/Users/frankliu/Projects/bg/tts-tools/bin/tts-mod "https://steamcommunity.com/sharedfiles/filedetails/?id=XXXXXXX"
+
+# Override directory name
+/Users/frankliu/Projects/bg/tts-tools/bin/tts-mod "https://steamcommunity.com/sharedfiles/filedetails/?id=XXXXXXX" -n my_game
+
+# Override full output path
+/Users/frankliu/Projects/bg/tts-tools/bin/tts-mod "https://steamcommunity.com/sharedfiles/filedetails/?id=XXXXXXX" -o /path/to/dir
+```
 
 ## Tool Location
 
@@ -40,7 +51,41 @@ All bin scripts handle `uv` and virtualenv activation internally — just call t
 
 ## Complete Workflow
 
-When asked to process a TTS Workshop mod, run these steps in order. Use `TTS_BIN` as shorthand below for `/Users/frankliu/Projects/bg/tts-tools/bin`.
+When asked to process a TTS Workshop mod, **use `tts-mod`** — it handles everything in one command.
+
+### Recommended: tts-mod (full pipeline)
+
+`tts-mod` handles the entire workflow — download, deserialize, assets, extract, and generate ALL PDFs (cards, tiles, boards). It auto-creates a `~/Projects/bg/<game_name>/` directory from the mod title:
+
+```bash
+TTS_BIN=/Users/frankliu/Projects/bg/tts-tools/bin
+
+# Auto-name directory from mod title (e.g. "Almighty (Official)" → ~/Projects/bg/almighty/)
+$TTS_BIN/tts-mod <workshop_id_or_url>
+
+# Override directory name
+$TTS_BIN/tts-mod <workshop_id_or_url> -n my_game_name
+
+# Override full output path
+$TTS_BIN/tts-mod <workshop_id_or_url> -o /custom/output/dir
+
+# Skip SSL verification if needed
+$TTS_BIN/tts-mod <workshop_id_or_url> --no-verify
+```
+
+Options:
+- `-n, --name NAME` - Override the auto-generated directory name
+- `-o, --output-dir DIR` - Override the full output directory path
+- `--no-verify` - Skip SSL certificate verification
+- `--card-width INCHES` - Card width (default: 2.5)
+- `--card-height INCHES` - Card height (default: 3.5)
+- `--card-spacing INCHES` - Spacing between cards (default: 0.0)
+
+### Manual step-by-step workflow
+
+Use individual tools only when you need fine-grained control over a specific step.
+
+Use `TTS_BIN` as shorthand below for `/Users/frankliu/Projects/bg/tts-tools/bin`.
 
 ### Step 1: Download the mod
 
@@ -115,27 +160,15 @@ Options:
 
 Run all applicable generators. Most board game mods have cards + tiles + boards.
 
-### One-command pipeline (cards only)
+### One-command pipeline (cards only, legacy)
 
-For card-only mods, the pipeline handles steps 1-4 automatically:
+For card-only mods, the older pipeline handles steps 1-4 automatically:
 
 ```bash
 $TTS_BIN/tts-pipeline <workshop_id_or_url> -o /path/to/output_dir
 ```
 
-This does NOT generate tiles or board PDFs — only card deck PDFs.
-
-### Full one-command pipeline (recommended)
-
-`tts-mod` handles the entire workflow — download, deserialize, assets, extract, and generate ALL PDFs (cards, tiles, boards). It auto-creates a `~/Projects/bg/<game_name>/` directory from the mod title:
-
-```bash
-$TTS_BIN/tts-mod <workshop_id_or_url>
-$TTS_BIN/tts-mod <workshop_id_or_url> -n my_game_name
-$TTS_BIN/tts-mod <workshop_id_or_url> -o /custom/output/dir
-```
-
-**IMPORTANT:** When the user gives you a Steam Workshop URL and asks to process it, prefer `tts-mod` over running individual steps manually.
+This does NOT generate tiles or board PDFs — only card deck PDFs. Prefer `tts-mod` instead.
 
 ## Quick Reference
 
