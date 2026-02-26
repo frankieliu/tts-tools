@@ -418,9 +418,15 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    json_file = Path(args.json_file)
+    json_file = Path(args.json_file).resolve()
+    # Default metadata and output paths relative to the .deserialized/ dir (parent of Workshop/)
+    target_dir = json_file.parent.parent
     metadata_file = Path(args.metadata)
+    if args.metadata == 'sprite_metadata.json' and not metadata_file.is_absolute():
+        metadata_file = target_dir / metadata_file
     output_file = Path(args.output)
+    if args.output == 'complete_deck.pdf' and not output_file.is_absolute():
+        output_file = target_dir / output_file
     output_dir = output_file.parent
 
     generate_deck_pdf(

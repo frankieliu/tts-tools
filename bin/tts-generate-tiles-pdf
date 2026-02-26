@@ -110,9 +110,18 @@ if [[ "$HAS_METADATA" == "false" ]] && [[ -n "$JSON_FILE" ]]; then
     fi
 fi
 
-# If no output was specified, add it to save in original directory
+# If no output was specified, save next to the input JSON's .deserialized/ dir
 if [[ "$HAS_OUTPUT" == "false" ]]; then
-    ARGS+=("-o" "$ORIG_DIR/tiles_and_boards.pdf")
+    TARGET_DIR="$ORIG_DIR"
+    if [[ -n "$JSON_FILE" ]]; then
+        INPUT_DIR="$(dirname "$JSON_FILE")"
+        if [[ "$(basename "$INPUT_DIR")" == "Workshop" ]]; then
+            TARGET_DIR="$(dirname "$INPUT_DIR")"
+        else
+            TARGET_DIR="$INPUT_DIR"
+        fi
+    fi
+    ARGS+=("-o" "$TARGET_DIR/tiles_and_boards.pdf")
 fi
 
 # Run with uv

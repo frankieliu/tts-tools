@@ -610,9 +610,15 @@ def main():
 
     args = parser.parse_args()
 
-    json_file = Path(args.json_file)
+    json_file = Path(args.json_file).resolve()
+    # Default metadata and output paths relative to the .deserialized/ dir (parent of Workshop/)
+    target_dir = json_file.parent.parent
     metadata_file = Path(args.metadata)
+    if args.metadata == 'tile_metadata.json' and not metadata_file.is_absolute():
+        metadata_file = target_dir / metadata_file
     output_file = Path(args.output)
+    if args.output == 'tiles_and_boards.pdf' and not output_file.is_absolute():
+        output_file = target_dir / output_file
 
     if not metadata_file.exists():
         print(f"Error: Metadata file not found: {metadata_file}")

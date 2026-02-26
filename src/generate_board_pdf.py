@@ -309,10 +309,13 @@ def main():
 
     # Metadata mode: auto-detect boards from tile_metadata.json
     if args.metadata:
-        metadata_path = Path(args.metadata)
+        metadata_path = Path(args.metadata).resolve()
         if not metadata_path.exists():
             print(f"Error: Metadata file not found: {metadata_path}")
             return 1
+
+        # Default output dir is same directory as tile_metadata.json
+        target_dir = metadata_path.parent
 
         boards = load_boards_from_metadata(metadata_path)
         if not boards:
@@ -336,7 +339,7 @@ def main():
                 output_path = base.parent / f"{base.stem}_{i + 1}{base.suffix}"
             else:
                 safe_name = nickname.replace(' ', '_').replace('/', '_') or f"board_{i + 1}"
-                output_path = Path(f"{safe_name}.pdf")
+                output_path = target_dir / f"{safe_name}.pdf"
 
             print(f"\n--- Board {i + 1}/{len(boards)}: {nickname or '(unnamed)'} ---")
 

@@ -155,6 +155,12 @@ def main():
 
     args = parser.parse_args()
 
+    # If output path is the default (relative), place it next to the input file's parent dir
+    if args.output == Path('tile_metadata.json') and args.json_files:
+        first_input = Path(args.json_files[0]).resolve()
+        # Input is typically Workshop/*.json; place metadata in the .deserialized/ dir (parent of Workshop/)
+        args.output = first_input.parent.parent / 'tile_metadata.json'
+
     # Process all JSON files
     all_items = []
     for json_file in args.json_files:

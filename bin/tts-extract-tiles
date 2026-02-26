@@ -70,9 +70,22 @@ for arg in "$@"; do
     fi
 done
 
-# If no output was specified, add it to save in original directory
+# If no output was specified, save next to the input JSON's .deserialized/ dir
 if [[ "$HAS_OUTPUT" == "false" ]]; then
-    ARGS+=("-o" "$ORIG_DIR/tile_metadata.json")
+    # Find the first .json arg to determine target directory
+    TARGET_DIR="$ORIG_DIR"
+    for a in "${ARGS[@]}"; do
+        if [[ "$a" == *.json ]] && [[ -f "$a" ]]; then
+            INPUT_DIR="$(dirname "$a")"
+            if [[ "$(basename "$INPUT_DIR")" == "Workshop" ]]; then
+                TARGET_DIR="$(dirname "$INPUT_DIR")"
+            else
+                TARGET_DIR="$INPUT_DIR"
+            fi
+            break
+        fi
+    done
+    ARGS+=("-o" "$TARGET_DIR/tile_metadata.json")
 fi
 
 # Run with uv

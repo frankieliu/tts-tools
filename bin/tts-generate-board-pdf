@@ -85,9 +85,21 @@ for arg in "$@"; do
     fi
 done
 
-# If no output was specified, save in calling directory
+# If no output was specified, save next to the metadata/input file
 if [[ "$HAS_OUTPUT" == "false" ]]; then
-    ARGS+=("-o" "$ORIG_DIR/board.pdf")
+    TARGET_DIR="$ORIG_DIR"
+    if [[ "$HAS_METADATA" == "true" ]]; then
+        # Find the metadata path from ARGS to derive target dir
+        PREV=""
+        for a in "${ARGS[@]}"; do
+            if [[ "$PREV" == "-m" ]] || [[ "$PREV" == "--metadata" ]]; then
+                TARGET_DIR="$(dirname "$a")"
+                break
+            fi
+            PREV="$a"
+        done
+    fi
+    ARGS+=("-o" "$TARGET_DIR/board.pdf")
 fi
 
 # Run with uv
