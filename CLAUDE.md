@@ -33,6 +33,7 @@ Tools are in `bin/` under this project root. They are **not** on PATH, so always
 /Users/frankliu/Projects/bg/tts-tools/bin/tts-generate-tiles-pdf
 /Users/frankliu/Projects/bg/tts-tools/bin/tts-generate-board-pdf
 /Users/frankliu/Projects/bg/tts-tools/bin/tts-pipeline
+/Users/frankliu/Projects/bg/tts-tools/bin/tts-mod
 ```
 
 All bin scripts handle `uv` and virtualenv activation internally — just call them directly.
@@ -123,6 +124,18 @@ $TTS_BIN/tts-pipeline <workshop_id_or_url> -o /path/to/output_dir
 ```
 
 This does NOT generate tiles or board PDFs — only card deck PDFs.
+
+### Full one-command pipeline (recommended)
+
+`tts-mod` handles the entire workflow — download, deserialize, assets, extract, and generate ALL PDFs (cards, tiles, boards). It auto-creates a `~/Projects/bg/<game_name>/` directory from the mod title:
+
+```bash
+$TTS_BIN/tts-mod <workshop_id_or_url>
+$TTS_BIN/tts-mod <workshop_id_or_url> -n my_game_name
+$TTS_BIN/tts-mod <workshop_id_or_url> -o /custom/output/dir
+```
+
+**IMPORTANT:** When the user gives you a Steam Workshop URL and asks to process it, prefer `tts-mod` over running individual steps manually.
 
 ## Quick Reference
 

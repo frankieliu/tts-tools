@@ -1,0 +1,292 @@
+#!/bin/bash
+# tts-mod - Full pipeline: download a TTS mod and generate all PDFs
+# Automatically creates ~/Projects/bg/<game_name>/ directory from the mod title
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BG_DIR="$HOME/Projects/bg"
+
+# Show help
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [[ -z "$1" ]]; then
+    cat << EOF
+Usage: tts-mod <url_or_id> [options]
+
+Full pipeline: download a TTS mod and generate all printable PDFs.
+Automatically creates ~/Projects/bg/<game_name>/ from the mod title.
+
+Arguments:
+  url_or_id                Steam Workshop URL or item ID
+
+Options:
+  -o, --output-dir DIR     Override output directory (skip auto-naming)
+  -n, --name NAME          Override directory name (e.g. "my_game")
+  --no-verify              Skip SSL certificate verification
+  --card-width INCHES      Card width in inches (default: 2.5)
+  --card-height INCHES     Card height in inches (default: 3.5)
+  --card-spacing INCHES    Spacing between cards (default: 0.0)
+  -h, --help               Show this help message
+
+Examples:
+  tts-mod "https://steamcommunity.com/sharedfiles/filedetails/?id=2846396687"
+  tts-mod 3584204942
+  tts-mod 3584204942 -n almighty
+  tts-mod 3584204942 -o /tmp/my_mod
+
+Output (in ~/Projects/bg/<game_name>/):
+  <id>_<name>.deserialized/
+  ├── complete_deck_faces_with_backs.pdf
+  ├── complete_deck_faces_no_backs.pdf
+  ├── complete_deck_backs.pdf
+  ├── tiles_and_boards.pdf
+  └── board.pdf (if boards found)
+EOF
+    exit 0
+fi
+
+# Parse arguments
+URL_OR_ID="$1"
+shift
+
+OUTPUT_DIR=""
+DIR_NAME=""
+NO_VERIFY=""
+CARD_WIDTH="2.5"
+CARD_HEIGHT="3.5"
+CARD_SPACING="0.0"
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -o|--output-dir)
+            OUTPUT_DIR="$2"
+            shift 2
+            ;;
+        -n|--name)
+            DIR_NAME="$2"
+            shift 2
+            ;;
+        --no-verify)
+            NO_VERIFY="--no-verify"
+            shift
+            ;;
+        --card-width)
+            CARD_WIDTH="$2"
+            shift 2
+            ;;
+        --card-height)
+            CARD_HEIGHT="$2"
+            shift 2
+            ;;
+        --card-spacing)
+            CARD_SPACING="$2"
+            shift 2
+            ;;
+        *)
+            echo "Error: Unknown option $1"
+            exit 1
+            ;;
+    esac
+done
+
+# Extract workshop ID from URL or use as-is
+WORKSHOP_ID="$URL_OR_ID"
+if [[ "$URL_OR_ID" == *"steamcommunity.com"* ]]; then
+    WORKSHOP_ID=$(echo "$URL_OR_ID" | grep -oE 'id=[0-9]+' | cut -d= -f2)
+fi
+
+if [[ -z "$WORKSHOP_ID" ]]; then
+    echo "Error: Could not extract workshop ID from: $URL_OR_ID"
+    exit 1
+fi
+
+echo "========================================="
+echo "TTS Mod Pipeline"
+echo "========================================="
+echo ""
+
+# If no output dir and no name override, query Steam for the title
+if [[ -z "$OUTPUT_DIR" ]]; then
+    if [[ -z "$DIR_NAME" ]]; then
+        echo "Querying Steam Workshop for mod title..."
+        # Query Steam API directly for the title
+        TITLE=$(curl -s -X POST "https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/" \
+            -d "itemcount=1" -d "publishedfileids[0]=$WORKSHOP_ID" \
+            | python3 -c "import sys,json; print(json.load(sys.stdin)['response']['publishedfiledetails'][0].get('title',''))" 2>/dev/null || echo "")
+
+        if [[ -z "$TITLE" ]]; then
+            echo "Warning: Could not get mod title, using workshop ID"
+            DIR_NAME="$WORKSHOP_ID"
+        else
+            echo "  Title: $TITLE"
+            # Convert title to a directory-friendly slug:
+            # - Remove parenthetical suffixes like "(Official)"
+            # - Lowercase
+            # - Replace spaces/special chars with underscores
+            # - Remove consecutive underscores
+            # - Trim leading/trailing underscores
+            DIR_NAME=$(echo "$TITLE" \
+                | sed -E 's/ *\([^)]*\) *//g' \
+                | tr '[:upper:]' '[:lower:]' \
+                | sed -E 's/[^a-z0-9]+/_/g' \
+                | sed -E 's/_+/_/g' \
+                | sed -E 's/^_|_$//g')
+
+            if [[ -z "$DIR_NAME" ]]; then
+                DIR_NAME="$WORKSHOP_ID"
+            fi
+        fi
+        echo "  Directory: $DIR_NAME"
+    fi
+    OUTPUT_DIR="$BG_DIR/$DIR_NAME"
+fi
+
+echo "  Output: $OUTPUT_DIR/"
+echo ""
+
+# Create output directory
+mkdir -p "$OUTPUT_DIR"
+
+# Step 1: Download
+echo "Step 1/6: Downloading from Steam Workshop..."
+"$SCRIPT_DIR/tts-download" "$WORKSHOP_ID" -o "$OUTPUT_DIR" $NO_VERIFY
+echo ""
+
+# Find the downloaded .tts file
+TTS_FILE=$(find "$OUTPUT_DIR" -maxdepth 1 -name "*.tts" -type f | sort -r | head -n 1)
+if [[ -z "$TTS_FILE" ]]; then
+    echo "Error: No .tts file found in $OUTPUT_DIR"
+    exit 1
+fi
+
+# Step 2: Deserialize
+echo "Step 2/6: Deserializing..."
+"$SCRIPT_DIR/tts-deserialize" "$TTS_FILE"
+echo ""
+
+JSON_FILE="${TTS_FILE%.tts}.deserialized.json"
+if [[ ! -f "$JSON_FILE" ]]; then
+    echo "Error: Deserialized JSON not found: $JSON_FILE"
+    exit 1
+fi
+
+# Step 3: Download assets
+echo "Step 3/6: Downloading assets..."
+"$SCRIPT_DIR/tts-assets" "$JSON_FILE" $NO_VERIFY
+echo ""
+
+DESERIALIZED_DIR="${TTS_FILE%.tts}.deserialized"
+if [[ ! -d "$DESERIALIZED_DIR" ]]; then
+    echo "Error: Deserialized directory not found: $DESERIALIZED_DIR"
+    exit 1
+fi
+
+# Find the workshop JSON inside the deserialized dir
+WORKSHOP_JSON=$(find "$DESERIALIZED_DIR/Workshop" -name "*.json" -type f | head -n 1)
+if [[ -z "$WORKSHOP_JSON" ]]; then
+    echo "Error: No JSON file found in $DESERIALIZED_DIR/Workshop/"
+    exit 1
+fi
+
+# Step 4: Extract metadata
+echo "Step 4/6: Extracting metadata..."
+TILES_OUTPUT=$("$SCRIPT_DIR/tts-extract-tiles" "$WORKSHOP_JSON" 2>&1)
+echo "$TILES_OUTPUT"
+
+SPRITES_OUTPUT=$("$SCRIPT_DIR/tts-extract-sprites" "$WORKSHOP_JSON" 2>&1)
+echo "$SPRITES_OUTPUT"
+echo ""
+
+# Parse what was found
+NUM_TILES=$(echo "$TILES_OUTPUT" | grep -oE '[0-9]+ tile' | grep -oE '[0-9]+' || echo "0")
+NUM_BOARDS=$(echo "$TILES_OUTPUT" | grep -oE '[0-9]+ board' | grep -oE '[0-9]+' || echo "0")
+NUM_TOKENS=$(echo "$TILES_OUTPUT" | grep -oE '[0-9]+ token' | grep -oE '[0-9]+' || echo "0")
+NUM_SPRITES=$(echo "$SPRITES_OUTPUT" | grep -oE '[0-9]+ sprite' | grep -oE '[0-9]+' || echo "0")
+
+HAS_CARDS=false
+HAS_TILES=false
+HAS_BOARDS=false
+
+if [[ "$NUM_SPRITES" -gt 0 ]]; then
+    HAS_CARDS=true
+fi
+
+TOTAL_SMALL=$((NUM_TILES + NUM_TOKENS))
+if [[ "$TOTAL_SMALL" -gt 0 ]]; then
+    HAS_TILES=true
+fi
+
+if [[ "$NUM_BOARDS" -gt 0 ]]; then
+    HAS_BOARDS=true
+fi
+
+# Step 5: Generate PDFs
+echo "Step 5/6: Generating PDFs..."
+GENERATED=()
+
+if [[ "$HAS_CARDS" == "true" ]]; then
+    echo ""
+    echo "  Generating card deck PDFs..."
+    "$SCRIPT_DIR/tts-generate-pdf" "$WORKSHOP_JSON" \
+        --card-width "$CARD_WIDTH" \
+        --card-height "$CARD_HEIGHT" \
+        --card-spacing "$CARD_SPACING"
+    GENERATED+=("complete_deck_faces_with_backs.pdf" "complete_deck_faces_no_backs.pdf" "complete_deck_backs.pdf")
+else
+    echo "  No card decks found, skipping deck PDFs"
+fi
+
+if [[ "$HAS_TILES" == "true" ]]; then
+    echo ""
+    echo "  Generating tiles PDF..."
+    "$SCRIPT_DIR/tts-generate-tiles-pdf" "$WORKSHOP_JSON"
+    GENERATED+=("tiles_and_boards.pdf")
+else
+    echo "  No tiles/tokens found, skipping tiles PDF"
+fi
+
+if [[ "$HAS_BOARDS" == "true" ]]; then
+    echo ""
+    echo "  Generating board PDF..."
+    "$SCRIPT_DIR/tts-generate-board-pdf" -m "$DESERIALIZED_DIR/tile_metadata.json"
+    GENERATED+=("board.pdf")
+else
+    echo "  No boards found, skipping board PDF"
+fi
+
+echo ""
+
+# Step 6: Summary
+echo "========================================="
+echo "Pipeline Complete!"
+echo "========================================="
+echo ""
+echo "Output directory: $DESERIALIZED_DIR/"
+echo ""
+echo "Generated PDFs:"
+for pdf in "${GENERATED[@]}"; do
+    FOUND=$(find "$DESERIALIZED_DIR" -maxdepth 1 -name "$pdf" -o -name "*.pdf" 2>/dev/null | head -20)
+    if [[ -f "$DESERIALIZED_DIR/$pdf" ]]; then
+        SIZE=$(ls -lh "$DESERIALIZED_DIR/$pdf" | awk '{print $5}')
+        echo "  $pdf ($SIZE)"
+    fi
+done
+
+# List any PDFs we didn't explicitly track (e.g. named board PDFs)
+for pdf_file in "$DESERIALIZED_DIR"/*.pdf; do
+    if [[ -f "$pdf_file" ]]; then
+        base=$(basename "$pdf_file")
+        ALREADY_LISTED=false
+        for g in "${GENERATED[@]}"; do
+            if [[ "$base" == "$g" ]]; then
+                ALREADY_LISTED=true
+                break
+            fi
+        done
+        if [[ "$ALREADY_LISTED" == "false" ]]; then
+            SIZE=$(ls -lh "$pdf_file" | awk '{print $5}')
+            echo "  $base ($SIZE)"
+        fi
+    fi
+done
+
+echo ""
