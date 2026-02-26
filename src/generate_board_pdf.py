@@ -277,7 +277,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Generate a multi-page PDF from a board image for physical assembly'
     )
-    parser.add_argument('image_file', nargs='?', default=None,
+    parser.add_argument('-i', '--image', dest='image_file', default=None,
                         help='Path to board image (PNG/JPG)')
 
     # Metadata mode

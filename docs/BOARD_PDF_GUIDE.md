@@ -31,13 +31,13 @@ Step 2 (`tts-generate-board-pdf -m`) reads the board entries from that metadata,
 tts-generate-board-pdf -m tile_metadata.json --dpi 150
 
 # Using explicit dimensions (if you know the board size)
-tts-generate-board-pdf board.png --width 11 --height 9.8 -o board.pdf
+tts-generate-board-pdf -i board.png --width 11 --height 9.8 -o board.pdf
 
 # Using DPI-based sizing (derives size from image pixels)
-tts-generate-board-pdf board.png --dpi 150 -o board.pdf
+tts-generate-board-pdf -i board.png --dpi 150 -o board.pdf
 
 # Default: 300 DPI if no sizing specified
-tts-generate-board-pdf board.png
+tts-generate-board-pdf -i board.png
 ```
 
 ## Sizing Options
@@ -48,13 +48,13 @@ Specify the desired physical size directly in inches:
 
 ```bash
 # Both dimensions
-tts-generate-board-pdf board.png --width 20 --height 16
+tts-generate-board-pdf -i board.png --width 20 --height 16
 
 # Width only (height derived from aspect ratio)
-tts-generate-board-pdf board.png --width 20
+tts-generate-board-pdf -i board.png --width 20
 
 # Height only (width derived from aspect ratio)
-tts-generate-board-pdf board.png --height 16
+tts-generate-board-pdf -i board.png --height 16
 ```
 
 ### DPI-Based (`--dpi`)
@@ -69,7 +69,7 @@ physical_height = image_height_px / DPI
 For example, a 3000x2400 image at 150 DPI produces a 20" x 16" board.
 
 ```bash
-tts-generate-board-pdf board.png --dpi 150
+tts-generate-board-pdf -i board.png --dpi 150
 ```
 
 Default DPI is 300 if neither `--width`, `--height`, nor `--dpi` is specified.
@@ -118,6 +118,7 @@ Each page has:
 
 | Option | Default | Description |
 |--------|---------|-------------|
+| `-i, --image FILE` | — | Path to board image (PNG/JPG) |
 | `-m, --metadata FILE` | — | Read boards from tile_metadata.json |
 | `--width INCHES` | — | Physical board width |
 | `--height INCHES` | — | Physical board height |
@@ -133,7 +134,7 @@ Each page has:
 Use `--overlap` to add shared content between adjacent pages, making alignment easier:
 
 ```bash
-tts-generate-board-pdf board.png --width 20 --overlap 0.25
+tts-generate-board-pdf -i board.png --width 20 --overlap 0.25
 ```
 
 With overlap, adjacent pages share 0.25" of image content along their shared edge, giving you a visual guide for alignment.
@@ -173,14 +174,14 @@ To calibrate:
 
 ```bash
 # Steam Power board at known dimensions
-tts-generate-board-pdf Images/board.png --width 11 --height 9.8 -o steam_board.pdf
+tts-generate-board-pdf -i Images/board.png --width 11 --height 9.8 -o steam_board.pdf
 
 # Large board with overlap for easier assembly
-tts-generate-board-pdf Images/board.png --width 24 --height 18 --overlap 0.5
+tts-generate-board-pdf -i Images/board.png --width 24 --height 18 --overlap 0.5
 
 # Minimal margins to maximize image area per page
-tts-generate-board-pdf Images/board.png --dpi 200 --margin 0.25
+tts-generate-board-pdf -i Images/board.png --dpi 200 --margin 0.25
 
 # No labels for cleaner output
-tts-generate-board-pdf Images/board.png --width 15 --no-labels
+tts-generate-board-pdf -i Images/board.png --width 15 --no-labels
 ```

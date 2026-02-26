@@ -9,15 +9,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Show help
 if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [[ -z "$1" ]]; then
     cat << EOF
-Usage: tts-generate-board-pdf <image_file> [options]
+Usage: tts-generate-board-pdf -i <image_file> [options]
        tts-generate-board-pdf -m <tile_metadata.json> [options]
 
 Generate a multi-page PDF from a board image for physical assembly.
 
-Arguments:
-  image_file              Path to board image (PNG/JPG)
-
-Metadata mode:
+Options:
+  -i, --image FILE        Path to board image (PNG/JPG)
   -m, --metadata FILE     Read boards from tile_metadata.json (auto-detect images)
 
 Sizing (pick one approach):
@@ -34,10 +32,10 @@ Options:
   -h, --help              Show this help message
 
 Examples:
-  tts-generate-board-pdf board.png --width 11 --height 9.8
-  tts-generate-board-pdf board.png --dpi 300 -o board_output.pdf
+  tts-generate-board-pdf -i board.png --width 11 --height 9.8
+  tts-generate-board-pdf -i board.png --dpi 300 -o board_output.pdf
   tts-generate-board-pdf -m tile_metadata.json --dpi 150
-  tts-generate-board-pdf board.png --width 20 --overlap 0.25
+  tts-generate-board-pdf -i board.png --width 20 --overlap 0.25
 
 Output:
   board.pdf               Multi-page PDF with crop/registration marks
@@ -65,6 +63,14 @@ for arg in "$@"; do
     # Check if previous arg was -m or --metadata
     elif [[ "$PREV_ARG" == "-m" ]] || [[ "$PREV_ARG" == "--metadata" ]]; then
         HAS_METADATA=true
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    # Check if previous arg was -i or --image
+    elif [[ "$PREV_ARG" == "-i" ]] || [[ "$PREV_ARG" == "--image" ]]; then
         if [[ "$arg" == /* ]]; then
             ARGS+=("$arg")
         else
