@@ -18,7 +18,7 @@ Arguments:
 
 Options:
   -m, --metadata FILE      Sprite metadata file (default: sprite_metadata.json)
-  -o, --output FILE        Output PDF file (default: complete_deck.pdf)
+  -o, --output FILE        Output PDF base path (default: complete_deck.pdf)
   --card-width INCHES      Card width in inches (default: 2.5)
   --card-height INCHES     Card height in inches (default: 3.5)
   --card-spacing INCHES    Spacing between cards (default: 0.0)
@@ -31,7 +31,9 @@ Examples:
   tts-generate-pdf Workshop/*.json --card-width 2.75 --card-height 4.0
 
 Output:
-  complete_deck.pdf        # PDF with all cards in 3×3 grids
+  complete_deck_faces_with_backs.pdf   # Cards with unique backs
+  complete_deck_faces_no_backs.pdf     # Cards without unique backs
+  complete_deck_backs.pdf              # Unique backs (mirrored for printing)
 
 Features:
   - Extracts card duplication from JSON automatically

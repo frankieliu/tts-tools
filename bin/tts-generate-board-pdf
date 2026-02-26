@@ -21,7 +21,7 @@ Options:
 Sizing (pick one approach):
   --width INCHES          Physical width in inches
   --height INCHES         Physical height in inches
-  --dpi N                 Derive size from image pixels (default: 300)
+  --dpi N                 Derive size from image pixels (default: 125)
 
 Options:
   -o, --output FILE       Output PDF file (default: board.pdf)

@@ -36,7 +36,7 @@ tts-generate-board-pdf -i board.png --width 11 --height 9.8 -o board.pdf
 # Using DPI-based sizing (derives size from image pixels)
 tts-generate-board-pdf -i board.png --dpi 150 -o board.pdf
 
-# Default: 300 DPI if no sizing specified
+# Default: 125 DPI if no sizing specified
 tts-generate-board-pdf -i board.png
 ```
 
@@ -72,7 +72,7 @@ For example, a 3000x2400 image at 150 DPI produces a 20" x 16" board.
 tts-generate-board-pdf -i board.png --dpi 150
 ```
 
-Default DPI is 300 if neither `--width`, `--height`, nor `--dpi` is specified.
+Default DPI is 125 if neither `--width`, `--height`, nor `--dpi` is specified.
 
 ## How Page Splitting Works
 
@@ -122,7 +122,7 @@ Each page has:
 | `-m, --metadata FILE` | — | Read boards from tile_metadata.json |
 | `--width INCHES` | — | Physical board width |
 | `--height INCHES` | — | Physical board height |
-| `--dpi N` | 300 | Derive size from pixels |
+| `--dpi N` | 125 | Derive size from pixels |
 | `-o, --output FILE` | board.pdf | Output PDF path |
 | `--margin INCHES` | 0.5 | Page margin |
 | `--overlap INCHES` | 0 | Overlap between adjacent pages |

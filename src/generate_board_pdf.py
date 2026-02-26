@@ -145,7 +145,7 @@ def generate_board_pdf(image_path, output_path, width=None, height=None, dpi=125
         output_path: Output PDF path
         width: Explicit board width in inches (optional)
         height: Explicit board height in inches (optional)
-        dpi: DPI for size derivation (default: 300)
+        dpi: DPI for size derivation (default: 125)
         margin: Page margin in inches (default: 0.5)
         overlap: Overlap between adjacent pages in inches (default: 0)
         no_labels: If True, suppress assembly labels
