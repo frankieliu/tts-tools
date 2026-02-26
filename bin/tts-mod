@@ -196,11 +196,11 @@ SPRITES_OUTPUT=$("$SCRIPT_DIR/tts-extract-sprites" "$WORKSHOP_JSON" 2>&1)
 echo "$SPRITES_OUTPUT"
 echo ""
 
-# Parse what was found
-NUM_TILES=$(echo "$TILES_OUTPUT" | grep -oE '[0-9]+ tile' | grep -oE '[0-9]+' || echo "0")
-NUM_BOARDS=$(echo "$TILES_OUTPUT" | grep -oE '[0-9]+ board' | grep -oE '[0-9]+' || echo "0")
-NUM_TOKENS=$(echo "$TILES_OUTPUT" | grep -oE '[0-9]+ token' | grep -oE '[0-9]+' || echo "0")
-NUM_SPRITES=$(echo "$SPRITES_OUTPUT" | grep -oE '[0-9]+ sprite' | grep -oE '[0-9]+' || echo "0")
+# Parse what was found (head -1 to avoid multi-line matches)
+NUM_TILES=$(echo "$TILES_OUTPUT" | grep -oE '[0-9]+ tile' | head -1 | grep -oE '[0-9]+' || echo "0")
+NUM_BOARDS=$(echo "$TILES_OUTPUT" | grep -oE '[0-9]+ board' | head -1 | grep -oE '[0-9]+' || echo "0")
+NUM_TOKENS=$(echo "$TILES_OUTPUT" | grep -oE '[0-9]+ token' | head -1 | grep -oE '[0-9]+' || echo "0")
+NUM_SPRITES=$(echo "$SPRITES_OUTPUT" | grep -oE '[0-9]+ sprite' | head -1 | grep -oE '[0-9]+' || echo "0")
 
 HAS_CARDS=false
 HAS_TILES=false
