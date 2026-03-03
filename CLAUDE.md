@@ -140,6 +140,14 @@ Outputs up to 4 PDFs depending on what the mod contains:
 - `complete_deck_faces_no_backs.pdf` — Card faces from decks that have **shared** backs (many cards use the same back image). The name means "faces without accompanying back pages", not that the cards lack backs.
 - `complete_deck_shared_backs.pdf` — One copy of each distinct shared back image. Some of these are generic card-back patterns, but others are content-bearing (reference cards, player aids, victory conditions).
 
+**Full-page mode** (one card per page, scaled to fill):
+
+```bash
+$TTS_BIN/tts-generate-pdf Workshop/*.json --full-page
+```
+
+Useful for reference cards, player aids, or any card you want printed large. Each card gets its own page, scaled to fill letter size with 0.25" margins. Landscape cards auto-rotate to landscape pages.
+
 #### If tiles were found (small items packed, large items one per page):
 
 ```bash
@@ -149,6 +157,23 @@ $TTS_BIN/tts-generate-tiles-pdf Workshop/*.json
 Output: `tiles_and_boards.pdf`
 
 Scale factor is auto-detected from card decks. Large items with landscape images are automatically rotated to landscape pages. All duplicate items are printed individually by default; use `--group` to group duplicates.
+
+**Hex grid layouts** for mods with hex tiles:
+
+```bash
+# Honeycomb grid (flat-top hexes with hex outlines)
+$TTS_BIN/tts-generate-tiles-pdf Workshop/*.json --hex-grid
+
+# Hex strip (pointy edges touching horizontally, rows offset by half a tile,
+# maximizes straight-line cuts)
+$TTS_BIN/tts-generate-tiles-pdf Workshop/*.json --hex-strip
+
+# Include non-hex tokens in the hex grid by nickname pattern
+# (matched tokens get a colored hex background)
+$TTS_BIN/tts-generate-tiles-pdf Workshop/*.json --hex-strip --hex-include Moai Shell
+```
+
+Hex tile detection: square RGBA images are auto-detected as hex tiles. The `--hex-include` flag pulls additional tokens into the hex grid by case-insensitive nickname substring match, drawing them on a clay-red hex background. Non-matching items use standard rectangular packing.
 
 #### If boards were found (large items, split across pages):
 

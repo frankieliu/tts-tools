@@ -286,8 +286,42 @@ Options:
   --tokens-only             Generate PDF with tokens only
   --no-labels               Do not draw text labels
   --group                   Group duplicate items (default: print all copies)
+  --hex-grid                Arrange hex tiles in honeycomb grid with hex outlines
+  --hex-strip               Hex tiles with pointy edges touching, rows offset by half
+  --hex-include PAT [...]   Include tokens matching nickname patterns in hex grid
   -h, --help                Show help message
 ```
+
+## Hex Grid Layouts
+
+For mods with hex-shaped tiles (detected as square RGBA images):
+
+### Honeycomb Grid (`--hex-grid`)
+Flat-top hexes in a standard honeycomb layout with thin hex outlines drawn between tiles.
+
+```bash
+tts-generate-tiles-pdf Workshop/game.json --hex-grid
+```
+
+### Hex Strip (`--hex-strip`)
+Flat-top hexes with pointy edges touching horizontally, each row offset by half a tile width. This layout maximizes long straight diagonal cut lines across the page.
+
+```bash
+tts-generate-tiles-pdf Workshop/game.json --hex-strip
+```
+
+### Including Non-Hex Tokens (`--hex-include`)
+Pull additional tokens into the hex grid by matching their nickname (case-insensitive substring). Matched tokens are drawn on a colored hex background and scaled to fit the hex cell.
+
+```bash
+# Include Moai head tokens in the hex grid
+tts-generate-tiles-pdf Workshop/game.json --hex-strip --hex-include Moai
+
+# Include multiple token types
+tts-generate-tiles-pdf Workshop/game.json --hex-strip --hex-include Moai Shell
+```
+
+Non-matching items continue to use standard rectangular packing on separate pages.
 
 ## Summary
 

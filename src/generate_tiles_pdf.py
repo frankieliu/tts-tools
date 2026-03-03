@@ -11,6 +11,7 @@ Scaling convention:
 """
 
 import json
+import math
 from pathlib import Path
 from PIL import Image
 from reportlab.lib.pagesizes import letter
@@ -269,6 +270,216 @@ def pack_small_items(items, page_width, page_height, margin, item_spacing=0.2 * 
     return pages
 
 
+def draw_hex_outline(c, cx, cy, hex_w, hex_h, fill_color=None):
+    """
+    Draw a flat-top hexagon outline centered at (cx, cy).
+
+    For flat-top orientation:
+      - hex_w = width (vertex to vertex, horizontal)
+      - hex_h = height (flat side to flat side, vertical)
+
+    Vertices (flat-top, starting from right vertex, clockwise):
+      right:       (w/2, 0)
+      lower-right: (w/4, -h/2)
+      lower-left:  (-w/4, -h/2)
+      left:        (-w/2, 0)
+      upper-left:  (-w/4, h/2)
+      upper-right: (w/4, h/2)
+
+    Args:
+        fill_color: Optional (r, g, b) tuple to fill the hex. Values 0.0-1.0.
+    """
+    hw = hex_w / 2
+    hh = hex_h / 2
+    qw = hex_w / 4
+
+    vertices = [
+        (cx + hw, cy),           # right
+        (cx + qw, cy - hh),     # lower-right
+        (cx - qw, cy - hh),     # lower-left
+        (cx - hw, cy),           # left
+        (cx - qw, cy + hh),     # upper-left
+        (cx + qw, cy + hh),     # upper-right
+    ]
+
+    p = c.beginPath()
+    p.moveTo(*vertices[0])
+    for vx, vy in vertices[1:]:
+        p.lineTo(vx, vy)
+    p.close()
+
+    c.setStrokeColorRGB(0.4, 0.4, 0.4)
+    c.setLineWidth(0.5)
+    if fill_color:
+        c.setFillColorRGB(*fill_color)
+        c.drawPath(p, stroke=1, fill=1)
+    else:
+        c.drawPath(p, stroke=1, fill=0)
+
+
+def pack_hex_grid_items(items, page_width, page_height, margin, hex_gap=0.02 * inch):
+    """
+    Pack hex-shaped items onto pages in a flat-top honeycomb grid.
+
+    For flat-top hexagons:
+      - hex_w = tile width (vertex to vertex, horizontal)
+      - hex_h = tile height (flat side to flat side, vertical)
+      - Horizontal step between columns: hex_w * 3/4 + gap
+      - Vertical step between rows: hex_h + gap
+      - Odd columns offset vertically by (hex_h + gap) / 2
+
+    Args:
+        items: List of (item_info, width_pts, height_pts, item_image) tuples
+            All items should be roughly the same size (uniform hex tiles).
+        page_width, page_height: Page dimensions in points
+        margin: Margin in points
+        hex_gap: Gap between hexes in points
+
+    Returns:
+        List of pages, where each page is a list of
+        (item_info, width, height, image, cx, cy) tuples
+        where cx, cy are the CENTER of the hex cell.
+    """
+    if not items:
+        return []
+
+    # Use the first item's dimensions as the uniform hex size
+    _, tile_w, tile_h, _ = items[0]
+
+    hex_w = tile_w
+    hex_h = tile_h
+
+    available_width = page_width - (2 * margin)
+    available_height = page_height - (2 * margin)
+
+    # Grid spacing for flat-top hex
+    col_step = hex_w * 0.75 + hex_gap
+    row_step = hex_h + hex_gap
+
+    # Number of columns that fit
+    cols = int((available_width - hex_w) / col_step) + 1
+
+    # Number of rows that fit
+    # Odd columns are offset down by row_step/2, so they need extra room
+    rows = int((available_height - hex_h) / row_step) + 1
+    # Check if odd-column offset still fits
+    odd_col_last_y = margin + hex_h / 2 + row_step / 2 + (rows - 1) * row_step
+    if odd_col_last_y + hex_h / 2 > page_height - margin:
+        rows_odd = rows - 1
+    else:
+        rows_odd = rows
+
+    pages = []
+    item_idx = 0
+
+    while item_idx < len(items):
+        current_page = []
+
+        for col in range(cols):
+            is_odd_col = col % 2 == 1
+            num_rows = rows_odd if is_odd_col else rows
+            y_offset = row_step / 2 if is_odd_col else 0
+
+            for row in range(num_rows):
+                if item_idx >= len(items):
+                    break
+
+                cx = margin + hex_w / 2 + col * col_step
+                cy = page_height - margin - hex_h / 2 - row * row_step - y_offset
+
+                item_info, w, h, img = items[item_idx]
+                current_page.append((item_info, w, h, img, cx, cy))
+                item_idx += 1
+
+            if item_idx >= len(items):
+                break
+
+        if current_page:
+            pages.append(current_page)
+
+    return pages
+
+
+def pack_hex_strip_items(items, page_width, page_height, margin):
+    """
+    Pack flat-top hex tiles in rows where pointy edges touch horizontally.
+
+    Layout: each row places hexes so the right vertex of one hex touches the
+    left vertex of the next. Odd rows are offset right by half a hex width.
+    Vertical row spacing is hex_h * 3/4, so diagonal edges of adjacent rows
+    nest together. This maximizes long straight diagonal cuts across the sheet
+    and leaves small triangular gaps between three adjacent hexes.
+
+    Geometry (flat-top hex, width W vertex-to-vertex, height H flat-to-flat):
+      - Horizontal step in a row: W (vertex tip to vertex tip, touching)
+      - Odd row horizontal offset: W / 2
+      - Vertical step between rows: H * 3/4
+
+    Args:
+        items: List of (item_info, width_pts, height_pts, item_image) tuples
+        page_width, page_height: Page dimensions in points
+        margin: Margin in points
+
+    Returns:
+        List of pages, each a list of (item_info, w, h, image, cx, cy) tuples.
+    """
+    if not items:
+        return []
+
+    _, tile_w, tile_h, _ = items[0]
+    hex_w = tile_w
+    hex_h = tile_h
+
+    available_width = page_width - (2 * margin)
+    available_height = page_height - (2 * margin)
+
+    # Horizontal step: full hex width (pointy tips touching)
+    col_step = hex_w
+    # Vertical step: full hex height (rows don't nest)
+    row_step = hex_h
+
+    # Columns per row (even rows start at margin + hex_w/2)
+    cols_even = int((available_width - hex_w) / col_step) + 1
+    # Odd rows are offset by hex_w/2, so the last hex may not fit
+    cols_odd = cols_even
+    odd_last_x = margin + hex_w / 2 + col_step / 2 + (cols_odd - 1) * col_step
+    if odd_last_x + hex_w / 2 > page_width - margin:
+        cols_odd = cols_odd - 1
+
+    # Rows that fit
+    rows = int((available_height - hex_h) / row_step) + 1
+
+    pages = []
+    item_idx = 0
+
+    while item_idx < len(items):
+        current_page = []
+
+        for row in range(rows):
+            is_odd = row % 2 == 1
+            num_cols = cols_odd if is_odd else cols_even
+            x_offset = col_step / 2 if is_odd else 0
+
+            for col in range(num_cols):
+                if item_idx >= len(items):
+                    break
+
+                cx = margin + hex_w / 2 + col * col_step + x_offset
+                cy = page_height - margin - hex_h / 2 - row * row_step
+
+                item_info, w, h, img = items[item_idx]
+                current_page.append((item_info, w, h, img, cx, cy))
+                item_idx += 1
+
+            if item_idx >= len(items):
+                break
+
+        if current_page:
+            pages.append(current_page)
+
+    return pages
+
+
 def generate_tiles_pdf(
     items: list,
     output_file: Path,
@@ -277,7 +488,10 @@ def generate_tiles_pdf(
     small_item_threshold: float = 4.0,
     margin: float = 0.5,
     no_labels: bool = False,
-    no_grouping: bool = False
+    no_grouping: bool = False,
+    hex_grid: bool = False,
+    hex_strip: bool = False,
+    hex_include: list = None
 ):
     """
     Generate a PDF with tiles, boards, and tokens.
@@ -294,6 +508,9 @@ def generate_tiles_pdf(
         margin: Page margin in inches (default: 0.5)
         no_labels: If True, don't draw text labels (default: False)
         no_grouping: If True, print all duplicates (default: False)
+        hex_grid: If True, arrange hex tiles in honeycomb grid (default: False)
+        hex_strip: If True, arrange hex tiles with pointy edges touching horizontally (default: False)
+        hex_include: List of nickname patterns to also include in hex grid with clay red fill
     """
     if not items:
         print(f"No items to generate PDF")
@@ -492,31 +709,160 @@ def generate_tiles_pdf(
 
     # Pack and draw small items
     if small_items:
-        print(f"\nPacking {len(small_items)} small items...")
-        packed_pages = pack_small_items(small_items, page_width, page_height, margin_pts)
+        # When hex_grid or hex_strip is enabled, separate hex tiles from non-hex items
+        if hex_grid or hex_strip:
+            hex_items = []       # (item_info, w, h, img, fill_color) tuples
+            non_hex_items = []
+            hex_ref_w = None     # reference hex cell width in pts
+            hex_ref_h = None     # reference hex cell height in pts
+            hex_ref_size = None  # reference image pixel size
 
-        for page_num, page_items in enumerate(packed_pages, 1):
-            print(f"  Page {page_num}: {len(page_items)} items")
+            # First pass: find hex tiles (square RGBA images)
+            pending_non_hex = []
+            for item_tuple in small_items:
+                img = item_tuple[3]
+                img_w, img_h = img.size
+                is_square = abs(img_w - img_h) <= 2  # allow 2px tolerance
+                is_rgba = img.mode == 'RGBA'
+                if is_square and is_rgba:
+                    if hex_ref_w is None:
+                        hex_ref_w = item_tuple[1]
+                        hex_ref_h = item_tuple[2]
+                        hex_ref_size = img.size
+                    hex_items.append((*item_tuple, None))  # no fill color
+                else:
+                    pending_non_hex.append(item_tuple)
 
-            for item_info, width_pts, height_pts, item_image, x, y in page_items:
-                nickname = item_info['nickname'] or '(unnamed)'
-                number = item_info['item_number']
-                size_str = f"{item_info['print_width']:.1f}\" × {item_info['print_height']:.1f}\""
+            # Second pass: check non-hex items against --hex-include patterns
+            # to include them in the hex grid with a colored hex background
+            CLAY_RED = (0.55, 0.22, 0.12)  # earthen dark clay red
+            include_patterns = [p.lower() for p in (hex_include or [])]
+            for item_tuple in pending_non_hex:
+                item_info = item_tuple[0]
+                nickname = item_info.get('nickname', '').lower()
+                if hex_ref_size and include_patterns and any(p in nickname for p in include_patterns):
+                    hex_items.append((*item_tuple, CLAY_RED))
+                else:
+                    non_hex_items.append(item_tuple)
 
-                # Build label (only if not no_labels)
-                if not no_grouping and 'quantity' in item_info:
-                    quantity = item_info['quantity']
-                    if quantity > 1:
-                        label = f"{nickname} (×{quantity}) ({size_str})"
+            # Normalize hex tile images: crop to alpha bbox and resize to
+            # uniform dimensions so tiles with extra transparent padding
+            # fill the grid cell the same as other tiles.
+            if hex_items and hex_ref_size:
+                normalized = []
+                for item_info, w, h, img, fill_color in hex_items:
+                    if img.mode != 'RGBA':
+                        img = img.convert('RGBA')
+                    alpha_bbox = img.split()[3].getbbox()
+                    if alpha_bbox:
+                        img = img.crop(alpha_bbox)
+                    # Resize to fit within the hex cell, preserving aspect ratio
+                    img_w, img_h = img.size
+                    if img_w != hex_ref_size[0] or img_h != hex_ref_size[1]:
+                        # Scale to fit within hex ref size preserving aspect
+                        scale = min(hex_ref_size[0] / img_w, hex_ref_size[1] / img_h)
+                        new_w = int(img_w * scale)
+                        new_h = int(img_h * scale)
+                        img = img.resize((new_w, new_h), Image.LANCZOS)
+                        # Paste centered onto a transparent canvas of ref size
+                        canvas_img = Image.new('RGBA', hex_ref_size, (0, 0, 0, 0))
+                        paste_x = (hex_ref_size[0] - new_w) // 2
+                        paste_y = (hex_ref_size[1] - new_h) // 2
+                        canvas_img.paste(img, (paste_x, paste_y), img)
+                        img = canvas_img
+                    normalized.append((item_info, hex_ref_w, hex_ref_h, img, fill_color))
+                hex_items = normalized
+
+            if hex_items:
+                if hex_strip:
+                    mode_label = "hex strip (pointy edges touching)"
+                    # pack_hex_strip_items expects (info, w, h, img) tuples
+                    pack_input = [(info, w, h, img) for info, w, h, img, _ in hex_items]
+                    hex_pages = pack_hex_strip_items(pack_input, page_width, page_height, margin_pts)
+                else:
+                    mode_label = "honeycomb grid"
+                    pack_input = [(info, w, h, img) for info, w, h, img, _ in hex_items]
+                    hex_pages = pack_hex_grid_items(pack_input, page_width, page_height, margin_pts)
+
+                # Build a lookup from id(item_info) to fill_color
+                fill_colors = {}
+                for item_info, w, h, img, fill_color in hex_items:
+                    fill_colors[id(item_info)] = fill_color
+
+                print(f"\nPacking {len(hex_items)} hex tiles in {mode_label}...")
+
+                for page_num, page_items in enumerate(hex_pages, 1):
+                    print(f"  Page {page_num}: {len(page_items)} hex tiles")
+
+                    # Draw hex outlines first (behind images)
+                    for item_info, width_pts, height_pts, item_image, cx, cy in page_items:
+                        fill = fill_colors.get(id(item_info))
+                        draw_hex_outline(c, cx, cy, width_pts, height_pts, fill_color=fill)
+
+                    # Draw tile images on top (no preserveAspectRatio so all
+                    # tiles fill the same cell size even if alpha bbox varies)
+                    for item_info, width_pts, height_pts, item_image, cx, cy in page_items:
+                        img_reader = ImageReader(item_image)
+                        x = cx - width_pts / 2
+                        y = cy - height_pts / 2
+                        c.drawImage(img_reader, x, y, width=width_pts, height=height_pts,
+                                    mask='auto')
+
+                    c.showPage()
+                    total_pages += 1
+
+            # Pack remaining non-hex items with standard rectangular packing
+            if non_hex_items:
+                print(f"\nPacking {len(non_hex_items)} non-hex small items...")
+                packed_pages = pack_small_items(non_hex_items, page_width, page_height, margin_pts)
+
+                for page_num, page_items in enumerate(packed_pages, 1):
+                    print(f"  Page {page_num}: {len(page_items)} items")
+
+                    for item_info, width_pts, height_pts, item_image, x, y in page_items:
+                        nickname = item_info['nickname'] or '(unnamed)'
+                        number = item_info['item_number']
+                        size_str = f"{item_info['print_width']:.1f}\" × {item_info['print_height']:.1f}\""
+
+                        if not no_grouping and 'quantity' in item_info:
+                            quantity = item_info['quantity']
+                            if quantity > 1:
+                                label = f"{nickname} (×{quantity}) ({size_str})"
+                            else:
+                                label = f"{nickname} ({size_str})"
+                        else:
+                            label = f"{nickname} ({size_str})"
+
+                        draw_item_with_marks(c, item_image, x, y, width_pts, height_pts, label, number, no_labels)
+
+                    c.showPage()
+                    total_pages += 1
+        else:
+            print(f"\nPacking {len(small_items)} small items...")
+            packed_pages = pack_small_items(small_items, page_width, page_height, margin_pts)
+
+            for page_num, page_items in enumerate(packed_pages, 1):
+                print(f"  Page {page_num}: {len(page_items)} items")
+
+                for item_info, width_pts, height_pts, item_image, x, y in page_items:
+                    nickname = item_info['nickname'] or '(unnamed)'
+                    number = item_info['item_number']
+                    size_str = f"{item_info['print_width']:.1f}\" × {item_info['print_height']:.1f}\""
+
+                    # Build label (only if not no_labels)
+                    if not no_grouping and 'quantity' in item_info:
+                        quantity = item_info['quantity']
+                        if quantity > 1:
+                            label = f"{nickname} (×{quantity}) ({size_str})"
+                        else:
+                            label = f"{nickname} ({size_str})"
                     else:
                         label = f"{nickname} ({size_str})"
-                else:
-                    label = f"{nickname} ({size_str})"
 
-                draw_item_with_marks(c, item_image, x, y, width_pts, height_pts, label, number, no_labels)
+                    draw_item_with_marks(c, item_image, x, y, width_pts, height_pts, label, number, no_labels)
 
-            c.showPage()
-            total_pages += 1
+                c.showPage()
+                total_pages += 1
 
     # Draw large items (one per page)
     if large_items:
@@ -607,6 +953,12 @@ def main():
                         help='Do not draw text labels on items')
     parser.add_argument('--group', action='store_true',
                         help='Group duplicate items (default: print all copies)')
+    parser.add_argument('--hex-grid', action='store_true',
+                        help='Arrange hex tiles in honeycomb grid with hex outlines')
+    parser.add_argument('--hex-strip', action='store_true',
+                        help='Arrange hex tiles with pointy edges touching horizontally, rows offset by half a tile')
+    parser.add_argument('--hex-include', nargs='+', metavar='PATTERN',
+                        help='Include tokens matching these nickname patterns in the hex grid (case-insensitive substring match, e.g. --hex-include Moai)')
 
     args = parser.parse_args()
 
@@ -669,7 +1021,10 @@ def main():
         max_size=args.max_size,
         small_item_threshold=args.small_threshold,
         no_labels=args.no_labels,
-        no_grouping=not args.group
+        no_grouping=not args.group,
+        hex_grid=args.hex_grid,
+        hex_strip=args.hex_strip,
+        hex_include=args.hex_include
     )
 
     return 0

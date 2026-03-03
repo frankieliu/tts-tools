@@ -22,6 +22,7 @@ Options:
   --card-width INCHES      Card width in inches (default: 2.5)
   --card-height INCHES     Card height in inches (default: 3.5)
   --card-spacing INCHES    Spacing between cards (default: 0.0)
+  --full-page              One card per page, scaled to fill with 0.25" margins
   -h, --help              Show this help message
 
 Examples:

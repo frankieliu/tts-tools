@@ -170,7 +170,8 @@ def generate_pdf(
     card_width: float,
     card_height: float,
     card_spacing: float,
-    is_backs: bool = False
+    is_backs: bool = False,
+    full_page: bool = False
 ):
     """
     Generate a single PDF from a card list.
@@ -182,16 +183,95 @@ def generate_pdf(
         card_width, card_height: Card dimensions in inches
         card_spacing: Spacing between cards in inches
         is_backs: If True, mirror cards horizontally on each page for printing
+        full_page: If True, one card per page scaled to fill with 0.25" margins
     """
     total_cards = len(card_list)
     if total_cards == 0:
         print(f"  No cards for {output_file.name}, skipping")
         return
 
+    page_width, page_height = letter
+
+    if full_page:
+        margin = 0.25 * inch
+        avail_width = page_width - 2 * margin
+        avail_height = page_height - 2 * margin
+
+        c = pdf_canvas.Canvas(str(output_file), pagesize=letter)
+        total_pages = total_cards
+        print(f"\nGenerating {output_file.name} with {total_pages} pages (full-page mode)...")
+
+        for page_num, card_info in enumerate(card_list):
+            sprite_path_str = str(card_info['sprite_path'])
+            if sprite_path_str not in sprite_cache:
+                try:
+                    sprite_cache[sprite_path_str] = Image.open(card_info['sprite_path'])
+                except Exception as e:
+                    print(f"  Error loading sprite sheet {card_info['sprite_path']}: {e}")
+                    continue
+
+            sprite_image = sprite_cache[sprite_path_str]
+
+            try:
+                card_image = extract_card_from_sprite_sheet(
+                    sprite_image,
+                    card_info['grid_width'],
+                    card_info['grid_height'],
+                    card_info['position'],
+                    rotate_if_landscape=False
+                )
+
+                img_w, img_h = card_image.size
+                aspect = img_w / img_h
+
+                # Scale to fill available area while preserving aspect ratio
+                if aspect > (avail_width / avail_height):
+                    # Width-limited
+                    draw_w = avail_width
+                    draw_h = avail_width / aspect
+                else:
+                    # Height-limited
+                    draw_h = avail_height
+                    draw_w = avail_height * aspect
+
+                # Rotate page to landscape if card is landscape
+                if img_w > img_h:
+                    c.setPageSize((page_height, page_width))
+                    pg_w, pg_h = page_height, page_width
+                    avail_w_cur = pg_w - 2 * margin
+                    avail_h_cur = pg_h - 2 * margin
+                    if aspect > (avail_w_cur / avail_h_cur):
+                        draw_w = avail_w_cur
+                        draw_h = avail_w_cur / aspect
+                    else:
+                        draw_h = avail_h_cur
+                        draw_w = avail_h_cur * aspect
+                else:
+                    c.setPageSize(letter)
+                    pg_w, pg_h = page_width, page_height
+
+                x = (pg_w - draw_w) / 2
+                y = (pg_h - draw_h) / 2
+
+                img_reader = ImageReader(card_image)
+                c.drawImage(img_reader, x, y, width=draw_w, height=draw_h, preserveAspectRatio=True)
+
+            except Exception as e:
+                print(f"  Error extracting card {card_info['card_id']} position {card_info['position']}: {e}")
+
+            if page_num < total_cards - 1:
+                c.showPage()
+
+            if (page_num + 1) % 10 == 0:
+                print(f"  Page {page_num + 1}/{total_pages} complete...")
+
+        c.save()
+        print(f"\n✓ Saved {output_file.name}: {total_pages} pages, {total_cards} cards")
+        return
+
     cards_per_page = 9
     cards_per_row = 3
     cards_per_col = 3
-    page_width, page_height = letter
 
     # Card dimensions
     card_width_pts = card_width * inch
@@ -272,7 +352,8 @@ def generate_deck_pdf(
     cards_per_page: int = 9,
     card_width: float = 2.5,
     card_height: float = 3.5,
-    card_spacing: float = 0.0
+    card_spacing: float = 0.0,
+    full_page: bool = False
 ):
     """
     Generate three PDFs: faces with backs, faces without backs, and backs.
@@ -400,7 +481,8 @@ def generate_deck_pdf(
             card_width,
             card_height,
             card_spacing,
-            is_backs=False
+            is_backs=False,
+            full_page=full_page
         )
 
     if cards_without_backs:
@@ -411,7 +493,8 @@ def generate_deck_pdf(
             card_width,
             card_height,
             card_spacing,
-            is_backs=False
+            is_backs=False,
+            full_page=full_page
         )
 
     if backs_list:
@@ -422,7 +505,8 @@ def generate_deck_pdf(
             card_width,
             card_height,
             card_spacing,
-            is_backs=True  # Enable horizontal mirroring
+            is_backs=True,
+            full_page=full_page
         )
 
     if shared_backs_list:
@@ -433,7 +517,8 @@ def generate_deck_pdf(
             card_width,
             card_height,
             card_spacing,
-            is_backs=False
+            is_backs=False,
+            full_page=full_page
         )
 
 
@@ -447,6 +532,7 @@ if __name__ == '__main__':
     parser.add_argument('--card-width', type=float, default=2.5, help='Card width in inches (default: 2.5)')
     parser.add_argument('--card-height', type=float, default=3.5, help='Card height in inches (default: 3.5)')
     parser.add_argument('--card-spacing', type=float, default=0.0, help='Spacing between cards in inches (default: 0.0)')
+    parser.add_argument('--full-page', action='store_true', help='One card per page, scaled to fill with 0.25" margins')
 
     args = parser.parse_args()
 
@@ -467,5 +553,6 @@ if __name__ == '__main__':
         output_dir,
         card_width=args.card_width,
         card_height=args.card_height,
-        card_spacing=args.card_spacing
+        card_spacing=args.card_spacing,
+        full_page=args.full_page
     )

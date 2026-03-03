@@ -191,6 +191,9 @@ tts-generate-pdf Workshop/*.json --card-width 2.75 --card-height 4.0
 
 # Add spacing between cards
 tts-generate-pdf Workshop/*.json --card-spacing 0.1
+
+# One card per page, scaled to fill (for reference cards, player aids)
+tts-generate-pdf Workshop/*.json --full-page
 ```
 
 **Output:**
@@ -248,10 +251,22 @@ tts-generate-tiles-pdf Workshop/*.json --max-size 10.0
 # Generate only tiles or only boards
 tts-generate-tiles-pdf Workshop/*.json --tiles-only
 tts-generate-tiles-pdf Workshop/*.json --boards-only
+
+# Hex grid layouts for hex tiles
+tts-generate-tiles-pdf Workshop/*.json --hex-grid       # Honeycomb grid
+tts-generate-tiles-pdf Workshop/*.json --hex-strip      # Pointy edges touching, rows offset
+
+# Include non-hex tokens in the hex grid by nickname
+tts-generate-tiles-pdf Workshop/*.json --hex-strip --hex-include Moai Shell
 ```
 
 **Output:**
-- `tiles_and_boards.pdf` - One tile/board per page with crop marks and size labels
+- `tiles_and_boards.pdf` - Tiles packed on pages with crop marks and size labels
+
+**Hex Grid Options:**
+- `--hex-grid` - Flat-top honeycomb layout with hex outlines
+- `--hex-strip` - Flat-top hexes with pointy edges touching horizontally, rows offset by half a tile (maximizes straight-line cuts for easier cutting)
+- `--hex-include PATTERN [...]` - Include tokens matching nickname patterns (case-insensitive substring) in the hex grid with a colored hex background. Non-matching items use standard rectangular packing.
 
 **Auto-Detection:**
 By default, the tool automatically detects the correct scale factor by analyzing card decks in the mod. It assumes standard poker card dimensions (88mm height) and calculates the appropriate scale factor. You can override this with `--scale-factor` if needed.
