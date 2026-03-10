@@ -44,9 +44,14 @@ Tools are in `bin/` under this project root. They are **not** on PATH, so always
 /Users/frankliu/Projects/bg/tts-tools/bin/tts-generate-tiles-pdf
 /Users/frankliu/Projects/bg/tts-tools/bin/tts-generate-board-pdf
 /Users/frankliu/Projects/bg/tts-tools/bin/tts-extract-models
+/Users/frankliu/Projects/bg/tts-tools/bin/tts-extract-bundles
+/Users/frankliu/Projects/bg/tts-tools/bin/tts-extract-pdfs
 /Users/frankliu/Projects/bg/tts-tools/bin/tts-generate-model-textures-pdf
 /Users/frankliu/Projects/bg/tts-tools/bin/tts-pipeline
 /Users/frankliu/Projects/bg/tts-tools/bin/tts-mod
+/Users/frankliu/Projects/bg/tts-tools/bin/tts-board-splitter
+/Users/frankliu/Projects/bg/tts-tools/bin/tts-crop-sections
+/Users/frankliu/Projects/bg/tts-tools/bin/tts-inpaint
 ```
 
 All bin scripts handle `uv` and virtualenv activation internally — just call them directly.
@@ -116,16 +121,18 @@ Output: `<id>_<name>.deserialized/` directory with `Images/`, `Models/`, `Worksh
 
 ### Step 4: Extract metadata and generate PDFs
 
-After step 3, `cd` into the `.deserialized/` directory. Then run **both** extractors to see what the mod contains:
+After step 3, `cd` into the `.deserialized/` directory. Then run **all** extractors to see what the mod contains:
 
 ```bash
 cd /path/to/output_dir/<id>_<name>.deserialized
 $TTS_BIN/tts-extract-tiles Workshop/*.json
 $TTS_BIN/tts-extract-sprites Workshop/*.json
 $TTS_BIN/tts-extract-models Workshop/*.json
+$TTS_BIN/tts-extract-bundles Workshop/*.json
+$TTS_BIN/tts-extract-pdfs Workshop/*.json
 ```
 
-`tts-extract-tiles` prints a summary like: "Found X tile(s), Y board(s), and Z token(s)". `tts-extract-sprites` prints what card decks were found. `tts-extract-models` prints what 3D model textures were found. Use this output to decide which PDF generators to run:
+`tts-extract-tiles` prints a summary like: "Found X tile(s), Y board(s), and Z token(s)". `tts-extract-sprites` prints what card decks were found. `tts-extract-models` prints what 3D model textures were found. `tts-extract-bundles` prints what Unity asset bundle textures were found. `tts-extract-pdfs` downloads any Custom_PDF documents (rulebooks, charts) to `PDFs/`. Use this output to decide which PDF generators to run:
 
 #### If cards were found:
 
@@ -219,6 +226,10 @@ This does NOT generate tiles or board PDFs — only card deck PDFs. Prefer `tts-
 | Tiles (small) | `tts-extract-tiles` | `tts-generate-tiles-pdf` | `tiles_and_boards.pdf` |
 | Boards (large) | `tts-extract-tiles` | `tts-generate-board-pdf` | `board.pdf` |
 | 3D Models | `tts-extract-models` | `tts-generate-model-textures-pdf` | `model_textures.pdf` |
+| Asset Bundles | `tts-extract-bundles` | `tts-generate-model-textures-pdf` | `bundle_textures.pdf` |
+| Custom PDFs | `tts-extract-pdfs` | (downloads directly) | `PDFs/*.pdf` |
+| Board sections | `tts-board-splitter` | `tts-crop-sections` | `board_sections/*.png` + PDFs |
+| Image cleanup | — | `tts-inpaint` | `inpainted/*.png` |
 
 ## Output Directory Structure
 
@@ -232,6 +243,9 @@ This does NOT generate tiles or board PDFs — only card deck PDFs. Prefer `tts-
 ├── sprite_metadata.json                 # Card metadata (from tts-extract-sprites, uses composite keys)
 ├── tile_metadata.json                   # Tile/board metadata (from tts-extract-tiles)
 ├── model_texture_metadata.json          # 3D model texture metadata (from tts-extract-models)
+├── bundle_texture_metadata.json         # Asset bundle texture metadata (from tts-extract-bundles)
+├── BundleTextures/                      # Extracted bundle textures as PNGs
+├── PDFs/                                # Downloaded Custom_PDF documents (rulebooks, charts)
 ├── complete_deck_faces_with_backs.pdf   # Faces of cards with unique (per-card) backs
 ├── complete_deck_faces_no_backs.pdf     # Faces of cards with shared backs (back not inline)
 ├── complete_deck_backs.pdf              # Unique backs, mirrored for double-sided printing
@@ -239,7 +253,36 @@ This does NOT generate tiles or board PDFs — only card deck PDFs. Prefer `tts-
 ├── tiles_and_boards.pdf                 # Small items packed, large items one-per-page
 ├── board.pdf                            # Large board split across pages
 └── model_textures.pdf                   # 3D model diffuse textures, one per page
+└── bundle_textures.pdf                  # Asset bundle textures (from .unity3d files)
 ```
+
+## Splitting a Board into Sections
+
+For very large boards that need to be split into logical sections (e.g., separate map regions), use this 3-step workflow:
+
+### Step 1: Define sections visually
+
+```bash
+$TTS_BIN/tts-board-splitter board_image.png
+```
+
+Opens a React web app in the browser. Draw rectangles on the board, name them, resize edges, then click "Export JSON" to download `board_sections.json`. Requires Node.js.
+
+### Step 2: Crop sections and generate PDFs
+
+```bash
+$TTS_BIN/tts-crop-sections -i board_image.png -j board_sections.json --pdf --dpi 125
+```
+
+Crops each section into a separate PNG and generates a multi-page PDF for each. Without `--pdf`, only saves the cropped PNGs.
+
+### Step 3: Clean up artifacts (optional)
+
+```bash
+$TTS_BIN/tts-inpaint board_sections/01_Section_1.png
+```
+
+Launches IOPaint to interactively mask and inpaint artifacts (text overlays, grid lines, etc.). Requires `uv tool install iopaint`.
 
 ## Known Gaps
 
@@ -249,13 +292,13 @@ The following TTS object types are **not** handled by the toolchain:
 
 Shared card backs are now resolved in `extract_sprites.py` and printed in `complete_deck_shared_backs.pdf` (one copy per distinct back image). This covers reference cards, player aids, and other content-bearing backs that were previously dropped.
 
-### Custom_PDF objects
+### ~~Custom_PDF objects~~ (FIXED)
 
-`Custom_PDF` objects (22 found across mods) embed PDF documents (rulebooks, reference sheets) via a `CustomPDF.PDFUrl` field. These could be downloaded and included or extracted. Currently ignored entirely.
+`Custom_PDF` objects now have their PDFs downloaded by `tts-extract-pdfs`. The tool traverses the TTS JSON, finds all `Custom_PDF` objects with `CustomPDF.PDFUrl` fields, and downloads them to a `PDFs/` directory with sanitized filenames derived from the object's `Nickname`. No metadata JSON is needed — the PDFs are the final output.
 
-### Custom_Assetbundle objects
+### ~~Custom_Assetbundle objects~~ (FIXED)
 
-`Custom_Assetbundle` objects (102 across mods) are compiled Unity asset bundles. Textures cannot be extracted without Unity tooling. Not practical to handle.
+`Custom_Assetbundle` objects now have their textures extracted using UnityPy. `tts-extract-bundles` loads `.unity3d` files from `Assetbundles/`, extracts Texture2D and Sprite objects (filtering out normal maps, AO maps, and other PBR technical textures), saves them as PNGs in `BundleTextures/`, and produces `bundle_texture_metadata.json`. The existing `tts-generate-model-textures-pdf` generates `bundle_textures.pdf` from this metadata.
 
 ### Built-in TTS pieces
 
@@ -270,3 +313,5 @@ Shared card backs are now resolved in `extract_sprites.py` and printed in `compl
 - Use `--no-verify` flag on download/assets steps if SSL errors occur
 - Board game mods are typically stored under `~/Projects/bg/<game_name>/`
 - When the user says "print the board" they mean generate the board PDF and open it with `open board.pdf`
+- `tts-board-splitter` requires Node.js (npm) — it runs a Vite+React dev server
+- `tts-inpaint` requires IOPaint: install with `uv tool install iopaint`

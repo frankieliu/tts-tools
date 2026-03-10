@@ -1,0 +1,72 @@
+#!/bin/bash
+# tts-crop-sections - Crop board image into sections and optionally generate PDFs
+# Part of tts-tools unified workflow
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Show help
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [[ -z "$1" ]]; then
+    cat << EOF
+Usage: tts-crop-sections -i <image> -j <sections.json> [options]
+
+Crop a board image into rectangular sections (as defined by tts-board-splitter)
+and save each as a numbered PNG. Optionally generate multi-page PDFs.
+
+Options:
+  -i, --image FILE        Path to the board image (PNG/JPG)
+  -j, --json FILE         Path to sections JSON (from tts-board-splitter export)
+  -o, --output-dir DIR    Output directory (default: board_sections/ next to image)
+  --pdf                   Also generate multi-page PDFs for each section
+  --dpi N                 DPI for PDF generation (default: 125)
+  --overlap INCHES        Overlap between PDF pages (default: 0)
+  -h, --help              Show this help message
+
+Examples:
+  tts-crop-sections -i board.png -j board_sections.json
+  tts-crop-sections -i board.png -j sections.json -o output/
+  tts-crop-sections -i board.png -j sections.json --pdf --dpi 150 --overlap 0.25
+
+Output:
+  board_sections/01_Section 1.png    Cropped section images
+  board_sections/01_Section 1.pdf    Multi-page PDFs (with --pdf)
+EOF
+    exit 0
+fi
+
+# Convert relative paths to absolute paths
+ORIG_DIR="$(pwd)"
+ARGS=()
+PREV_ARG=""
+
+for arg in "$@"; do
+    if [[ "$PREV_ARG" == "-i" ]] || [[ "$PREV_ARG" == "--image" ]]; then
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    elif [[ "$PREV_ARG" == "-j" ]] || [[ "$PREV_ARG" == "--json" ]]; then
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    elif [[ "$PREV_ARG" == "-o" ]] || [[ "$PREV_ARG" == "--output-dir" ]]; then
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    else
+        ARGS+=("$arg")
+        PREV_ARG="$arg"
+    fi
+done
+
+cd "$SCRIPT_DIR"
+uv run src/crop_board_sections.py "${ARGS[@]}"

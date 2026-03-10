@@ -32,6 +32,10 @@ Thumbs.db
 *.png
 *.json.bak
 
+# Board splitter
+board-splitter/node_modules/
+board-splitter/public/board.png
+
 # Temporary files
 *.tmp
 .cache/

@@ -1,0 +1,147 @@
+#!/bin/bash
+# tts-inpaint - Launch IOPaint for AI-powered image inpainting
+# Part of tts-tools unified workflow
+
+set -e
+
+# Show help
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [[ -z "$1" ]]; then
+    cat << EOF
+Usage: tts-inpaint <image_file> [image_file2 ...] [options]
+
+Launch IOPaint (LaMa-based AI inpainting) to clean up artifacts, remove
+text, or fill in areas of board/card images.
+
+Arguments:
+  image_file              One or more image files to edit
+
+Options:
+  --port N                Server port (default: 8080)
+  --model NAME            Inpainting model (default: lama)
+  --output-dir DIR        Output directory (default: <image_dir>/inpainted/)
+  -h, --help              Show this help message
+
+Requirements:
+  Install IOPaint first:  uv tool install iopaint
+
+Examples:
+  tts-inpaint board.png
+  tts-inpaint section_01.png section_02.png --output-dir cleaned/
+  tts-inpaint board.png --model lama --port 9000
+
+Output:
+  Inpainted images are saved to the output directory when you export from
+  the IOPaint web UI.
+EOF
+    exit 0
+fi
+
+# Check if iopaint is available
+if ! command -v iopaint &>/dev/null; then
+    echo "Error: iopaint is not installed." >&2
+    echo "" >&2
+    echo "Install it with:" >&2
+    echo "  uv tool install iopaint" >&2
+    echo "" >&2
+    echo "Or with pip:" >&2
+    echo "  pip install iopaint" >&2
+    exit 1
+fi
+
+# Parse arguments
+PORT=8080
+MODEL="lama"
+OUTPUT_DIR=""
+IMAGE_FILES=()
+PREV_ARG=""
+
+for arg in "$@"; do
+    if [[ "$PREV_ARG" == "--port" ]]; then
+        PORT="$arg"
+        PREV_ARG=""
+        continue
+    elif [[ "$PREV_ARG" == "--model" ]]; then
+        MODEL="$arg"
+        PREV_ARG=""
+        continue
+    elif [[ "$PREV_ARG" == "--output-dir" ]]; then
+        OUTPUT_DIR="$arg"
+        PREV_ARG=""
+        continue
+    fi
+
+    case "$arg" in
+        --port|--model|--output-dir)
+            PREV_ARG="$arg"
+            ;;
+        -h|--help)
+            exit 0
+            ;;
+        *)
+            # Convert to absolute path
+            if [[ "$arg" == /* ]]; then
+                IMAGE_FILES+=("$arg")
+            else
+                IMAGE_FILES+=("$(pwd)/$arg")
+            fi
+            ;;
+    esac
+done
+
+if [[ ${#IMAGE_FILES[@]} -eq 0 ]]; then
+    echo "Error: at least one image file required" >&2
+    exit 1
+fi
+
+# Verify all files exist
+for f in "${IMAGE_FILES[@]}"; do
+    if [[ ! -f "$f" ]]; then
+        echo "Error: file not found: $f" >&2
+        exit 1
+    fi
+done
+
+# Determine input path for iopaint
+if [[ ${#IMAGE_FILES[@]} -eq 1 ]]; then
+    INPUT_DIR="$(dirname "${IMAGE_FILES[0]}")"
+    # Default output next to the input
+    if [[ -z "$OUTPUT_DIR" ]]; then
+        OUTPUT_DIR="$INPUT_DIR/inpainted"
+    fi
+else
+    # Multiple files: create a temp directory with symlinks
+    TEMP_DIR="$(mktemp -d)"
+    trap 'rm -rf "$TEMP_DIR"' EXIT
+    for f in "${IMAGE_FILES[@]}"; do
+        ln -sf "$f" "$TEMP_DIR/$(basename "$f")"
+    done
+    INPUT_DIR="$TEMP_DIR"
+    # Default output next to the first image
+    if [[ -z "$OUTPUT_DIR" ]]; then
+        OUTPUT_DIR="$(dirname "${IMAGE_FILES[0]}")/inpainted"
+    fi
+fi
+
+# Convert output dir to absolute path
+if [[ "$OUTPUT_DIR" != /* ]]; then
+    OUTPUT_DIR="$(pwd)/$OUTPUT_DIR"
+fi
+
+mkdir -p "$OUTPUT_DIR"
+
+echo "Starting IOPaint..."
+echo "  Model:  $MODEL"
+echo "  Input:  $INPUT_DIR"
+echo "  Output: $OUTPUT_DIR"
+echo "  URL:    http://localhost:$PORT"
+echo ""
+echo "Press Ctrl+C to stop."
+
+# Open browser after a short delay
+(sleep 2 && open "http://localhost:$PORT" 2>/dev/null || true) &
+
+iopaint start \
+    --model="$MODEL" \
+    --port="$PORT" \
+    --input="$INPUT_DIR" \
+    --output-dir="$OUTPUT_DIR"

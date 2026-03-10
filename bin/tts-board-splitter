@@ -1,0 +1,105 @@
+#!/bin/bash
+# tts-board-splitter - Launch interactive board section splitter
+# Part of tts-tools unified workflow
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SPLITTER_DIR="$SCRIPT_DIR/board-splitter"
+PORT=5173
+
+# Show help
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [[ -z "$1" ]]; then
+    cat << EOF
+Usage: tts-board-splitter <image_file> [options]
+
+Launch an interactive web app to visually define rectangular sections on a
+board image. Draw sections by clicking and dragging, resize by hovering edges,
+then export a JSON file describing each section's coordinates.
+
+Arguments:
+  image_file              Path to board image (PNG/JPG)
+
+Options:
+  --port N                Dev server port (default: 5173)
+  -h, --help              Show this help message
+
+Controls:
+  Drag                    Draw a new section
+  Space + drag            Pan the view
+  Scroll                  Pan (both axes)
+  Cmd/Ctrl + scroll       Zoom
+  Hover inner edges       Resize handle appears
+  Double-click section    Select it
+  Delete/Backspace        Remove selected section
+  Export JSON             Save sections to board_sections.json
+
+Example:
+  tts-board-splitter board.png
+  tts-board-splitter /path/to/large_board.png --port 3000
+
+Output:
+  board_sections.json     Exported from the web UI (via browser download)
+EOF
+    exit 0
+fi
+
+# Parse arguments
+IMAGE_PATH=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --port)
+            PORT="$2"
+            shift 2
+            ;;
+        -h|--help)
+            # Already handled above
+            exit 0
+            ;;
+        *)
+            if [[ -z "$IMAGE_PATH" ]]; then
+                IMAGE_PATH="$1"
+            else
+                echo "Error: unexpected argument: $1" >&2
+                exit 1
+            fi
+            shift
+            ;;
+    esac
+done
+
+if [[ -z "$IMAGE_PATH" ]]; then
+    echo "Error: image file required" >&2
+    echo "Usage: tts-board-splitter <image_file> [--port N]" >&2
+    exit 1
+fi
+
+# Convert to absolute path
+if [[ "$IMAGE_PATH" != /* ]]; then
+    IMAGE_PATH="$(pwd)/$IMAGE_PATH"
+fi
+
+if [[ ! -f "$IMAGE_PATH" ]]; then
+    echo "Error: file not found: $IMAGE_PATH" >&2
+    exit 1
+fi
+
+# Copy image to public directory
+echo "Copying image to board-splitter..."
+cp -f "$IMAGE_PATH" "$SPLITTER_DIR/public/board.png"
+
+# Install dependencies if needed
+if [[ ! -d "$SPLITTER_DIR/node_modules" ]]; then
+    echo "Installing dependencies..."
+    cd "$SPLITTER_DIR"
+    npm install
+fi
+
+# Launch dev server
+echo "Starting board splitter on http://localhost:$PORT ..."
+cd "$SPLITTER_DIR"
+
+# Open browser after a short delay
+(sleep 2 && open "http://localhost:$PORT" 2>/dev/null || true) &
+
+npm run dev -- --port "$PORT"
