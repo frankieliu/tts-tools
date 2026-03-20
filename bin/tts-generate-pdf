@@ -23,6 +23,7 @@ Options:
   --card-height INCHES     Card height in inches (default: 3.5)
   --card-spacing INCHES    Spacing between cards (default: 0.0)
   --full-page              One card per page, scaled to fill with 0.25" margins
+  --duplex                 Shared backs 1:1 with faces, mirrored for double-sided printing
   -h, --help              Show this help message
 
 Examples:

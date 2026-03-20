@@ -205,13 +205,12 @@ def find_local_image_file(url_id: str, base_dir: Path = None) -> str:
         return ''
 
     # Search for files containing this URL ID
-    for image_file in images_dir.glob('*.jpg'):
-        if url_id in image_file.name:
-            return str(image_file)
-
-    for image_file in images_dir.glob('*.png'):
-        if url_id in image_file.name:
-            return str(image_file)
+    # Also try with hyphens stripped, since the asset downloader strips them from filenames
+    url_id_no_hyphens = url_id.replace('-', '')
+    for ext in ('*.jpg', '*.png'):
+        for image_file in images_dir.glob(ext):
+            if url_id in image_file.name or url_id_no_hyphens in image_file.name:
+                return str(image_file)
 
     return ''
 

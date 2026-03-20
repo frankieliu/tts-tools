@@ -1,0 +1,60 @@
+#!/bin/bash
+# tts-extract-pdfs - Extract Custom_PDF objects (rulebooks, charts) from TTS JSON files
+# Part of tts-tools unified workflow
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Show help
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [[ -z "$1" ]]; then
+    cat << EOF
+Usage: tts-extract-pdfs <json_file> [options]
+
+Extract Custom_PDF objects (rulebooks, reference sheets, charts) from TTS
+JSON files and download the PDFs to a PDFs/ directory.
+
+Arguments:
+  json_file                Path to TTS JSON file (Workshop/*.json)
+
+Options:
+  --no-verify              Skip SSL certificate verification
+  -v, --verbose            Show detailed progress
+  -h, --help              Show this help message
+
+Examples:
+  tts-extract-pdfs Workshop/*.json
+  tts-extract-pdfs Workshop/mod.json --no-verify
+
+Output:
+  PDFs/                    # Downloaded PDF files
+
+Notes:
+  - Run this from the mod's .deserialized/ directory
+  - Downloads PDFs directly — no metadata JSON needed
+EOF
+    exit 0
+fi
+
+# Convert relative paths to absolute paths
+ORIG_DIR="$(pwd)"
+ARGS=()
+PREV_ARG=""
+
+for arg in "$@"; do
+    if [[ -f "$arg" ]] || [[ -d "$arg" ]] || [[ "$arg" == *"/"* ]]; then
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    else
+        ARGS+=("$arg")
+        PREV_ARG="$arg"
+    fi
+done
+
+# Run with uv
+cd "$SCRIPT_DIR"
+uv run src/extract_pdfs.py "${ARGS[@]}"

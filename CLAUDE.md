@@ -1,17 +1,8 @@
 # TTS Tools - Claude Instructions
 
-## Global Custom Instructions
+## CRITICAL: Output Location
 
-Before proceeding with any task, check for relevant custom instructions in:
-
-```
-~/Documents/Admin/apps/claude/custom-instructions/
-```
-
-Key instructions:
-- `shell-command-aliases.md` - **CRITICAL:** Always use -f flag with rm, cp, mv commands
-- `python-uv-usage.md` - Always use UV for Python package management and script execution
-- `stealth-fetch.md` - Web fetching tool for Cloudflare-protected sites
+**NEVER download or generate files inside this tts-tools repo.** All downloaded mods and generated PDFs must go in their own directory under `~/Projects/bg/<game_name>/`. Use `tts-mod` which handles this automatically, or manually create a game directory before running individual tools.
 
 ## TTS Tools Overview
 
@@ -155,6 +146,14 @@ $TTS_BIN/tts-generate-pdf Workshop/*.json --full-page
 
 Useful for reference cards, player aids, or any card you want printed large. Each card gets its own page, scaled to fill letter size with 0.25" margins. Landscape cards auto-rotate to landscape pages.
 
+**Fill-height mode** (cards scaled to fill page height, packed side-by-side):
+
+```bash
+$TTS_BIN/tts-generate-pdf Workshop/*.json --fill-height
+```
+
+Each card is scaled so its height fills the available page height (10.5" on letter with 0.25" margins). Cards are placed side-by-side left-to-right; a new page starts when a card won't fit. Landscape cards auto-switch to landscape pages. Useful for wide ability tiles, reference cards, or any card that benefits from maximum vertical size.
+
 #### If tiles were found (small items packed, large items one per page):
 
 ```bash
@@ -165,22 +164,41 @@ Output: `tiles_and_boards.pdf`
 
 Scale factor is auto-detected from card decks. Large items with landscape images are automatically rotated to landscape pages. All duplicate items are printed individually by default; use `--group` to group duplicates.
 
-**Hex grid layouts** for mods with hex tiles:
+**Hex strip layout** (preferred for hex tiles):
 
 ```bash
-# Honeycomb grid (flat-top hexes with hex outlines)
-$TTS_BIN/tts-generate-tiles-pdf Workshop/*.json --hex-grid
-
-# Hex strip (pointy edges touching horizontally, rows offset by half a tile,
-# maximizes straight-line cuts)
+# Hex strip — flat-top hexes in rows, each row offset by half a hex width.
+# Hexes touch at pointy edges, leaving small triangular gaps between three
+# adjacent hexes. Creamy yellow page background with hex outlines and
+# circular clipping on token images.
 $TTS_BIN/tts-generate-tiles-pdf Workshop/*.json --hex-strip
+```
 
-# Include non-hex tokens in the hex grid by nickname pattern
-# (matched tokens get a colored hex background)
+This is the **default choice for any mod with hex tiles or round tokens**. The layout packs hexes tightly with 6 neighbors each. Images are clipped to circles centered in each hex cell. Pages have a creamy yellow background with warm brown hex outlines.
+
+**Hex auto-detection**: Square-ish RGBA images (width/height within 5px) are auto-detected as hex tiles. Non-hex items (rectangular tokens, standees) go into standard rectangular packing on separate pages.
+
+**Infinite Bag handling**: TTS `Infinite_Bag` containers store only 1 template item but represent unlimited copies. Use `--infinite-count N` on `tts-extract-tiles` to specify how many copies to create for items in Infinite_Bags:
+
+```bash
+# Example: a mod has 14 loose "I" tokens + 1 template in Infinite_Bag.
+# To print 60 total: 14 + 46 = 60
+$TTS_BIN/tts-extract-tiles Workshop/*.json --infinite-count 46
+$TTS_BIN/tts-generate-tiles-pdf Workshop/*.json --hex-strip --tiles-only
+```
+
+**Including non-hex tokens in the hex grid** by nickname pattern:
+
+```bash
+# Matched tokens get a clay-red hex background
 $TTS_BIN/tts-generate-tiles-pdf Workshop/*.json --hex-strip --hex-include Moai Shell
 ```
 
-Hex tile detection: square RGBA images are auto-detected as hex tiles. The `--hex-include` flag pulls additional tokens into the hex grid by case-insensitive nickname substring match, drawing them on a clay-red hex background. Non-matching items use standard rectangular packing.
+**Honeycomb grid** (alternative layout — columns with odd columns offset vertically):
+
+```bash
+$TTS_BIN/tts-generate-tiles-pdf Workshop/*.json --hex-grid
+```
 
 #### If boards were found (large items, split across pages):
 
@@ -193,6 +211,7 @@ Output: `board.pdf` — board image split across multiple letter-sized pages for
 Options:
 - `--dpi N` - Control physical size (default: 125). Lower DPI = larger print.
 - `--width INCHES` / `--height INCHES` - Set explicit physical dimensions instead of DPI
+- `--margin INCHES` - Page margin (default: 0.5). Use `--margin 0.25` for tighter borders.
 - `--overlap INCHES` - Overlap between adjacent pages for easier assembly
 - `--no-labels` - Omit assembly labels
 

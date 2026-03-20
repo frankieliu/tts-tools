@@ -22,17 +22,24 @@ def extract_filename_from_url(url: str) -> str:
     return url.split('/')[-1]
 
 
-def find_tiles_and_boards(data: Any) -> List[Dict]:
+def find_tiles_and_boards(data: Any, infinite_bag_count: int = 1) -> List[Dict]:
     """
     Recursively traverse JSON to find all Custom_Tile, Custom_Board, and Custom_Token objects.
+
+    Args:
+        data: Parsed TTS JSON data
+        infinite_bag_count: Number of copies to create for items inside Infinite_Bag containers
 
     Returns a list of tile/board/token information dicts.
     """
     tiles_and_boards = []
 
-    def traverse(obj):
+    def traverse(obj, in_infinite_bag=False):
         if isinstance(obj, dict):
             name = obj.get('Name', '')
+
+            # Track if we're inside an Infinite_Bag
+            is_infinite_bag = name == 'Infinite_Bag'
 
             # Check if this is a Custom_Tile, Custom_Board, or Custom_Token
             if name in ('Custom_Tile', 'Custom_Board', 'Custom_Token'):
@@ -62,16 +69,26 @@ def find_tiles_and_boards(data: Any) -> List[Dict]:
                     'stretch': custom_image.get('CustomTile', {}).get('Stretch', True),
                 }
 
-                tiles_and_boards.append(tile_info)
+                # Items in Infinite_Bag get multiplied
+                copies = infinite_bag_count if in_infinite_bag else 1
+                for _ in range(copies):
+                    tiles_and_boards.append(tile_info.copy())
 
             # Recursively process all dict values
-            for value in obj.values():
-                traverse(value)
+            for key, value in obj.items():
+                if key in ('ContainedObjects', 'ObjectStates') and isinstance(value, list):
+                    for item in value:
+                        traverse(item, in_infinite_bag=is_infinite_bag or in_infinite_bag)
+                elif key == 'States' and isinstance(value, dict):
+                    for state in value.values():
+                        traverse(state, in_infinite_bag=in_infinite_bag)
+                elif isinstance(value, (dict, list)):
+                    traverse(value, in_infinite_bag=in_infinite_bag)
 
         elif isinstance(obj, list):
             # Recursively process all list items
             for item in obj:
-                traverse(item)
+                traverse(item, in_infinite_bag=in_infinite_bag)
 
     traverse(data)
     return tiles_and_boards
@@ -91,15 +108,17 @@ def find_local_image_file(url_id: str, base_dir: Path = None) -> str:
         return ''
 
     # Search for files containing this URL ID
+    # Also try with hyphens stripped, since the asset downloader strips them from filenames
+    url_id_no_hyphens = url_id.replace('-', '')
     for ext in ['*.jpg', '*.png', '*.jpeg']:
         for image_file in images_dir.glob(ext):
-            if url_id in image_file.name:
+            if url_id in image_file.name or url_id_no_hyphens in image_file.name:
                 return str(image_file)
 
     return ''
 
 
-def process_json_file(json_path: Path) -> List[Dict[str, Any]]:
+def process_json_file(json_path: Path, infinite_bag_count: int = 1) -> List[Dict[str, Any]]:
     """Process a single JSON file and extract all tiles and boards."""
     print(f"Processing {json_path}...")
 
@@ -111,7 +130,7 @@ def process_json_file(json_path: Path) -> List[Dict[str, Any]]:
         return []
 
     # Find all tiles and boards
-    items = find_tiles_and_boards(data)
+    items = find_tiles_and_boards(data, infinite_bag_count=infinite_bag_count)
 
     # Determine base directory for image search
     json_dir = json_path.parent
@@ -152,6 +171,13 @@ def main():
         action='store_true',
         help='Verbose output'
     )
+    parser.add_argument(
+        '--infinite-count',
+        type=int,
+        default=1,
+        metavar='N',
+        help='Number of copies for items in Infinite_Bag containers (default: 1)'
+    )
 
     args = parser.parse_args()
 
@@ -168,7 +194,7 @@ def main():
             print(f"Warning: {json_file} not found, skipping", file=sys.stderr)
             continue
 
-        items = process_json_file(json_file)
+        items = process_json_file(json_file, infinite_bag_count=args.infinite_count)
         all_items.extend(items)
 
     # Display summary

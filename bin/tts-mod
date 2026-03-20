@@ -25,6 +25,7 @@ Options:
   --card-width INCHES      Card width in inches (default: 2.5)
   --card-height INCHES     Card height in inches (default: 3.5)
   --card-spacing INCHES    Spacing between cards (default: 0.0)
+  --duplex                 Shared backs 1:1 with faces, mirrored for double-sided printing
   -h, --help               Show this help message
 
 Examples:
@@ -55,6 +56,7 @@ NO_VERIFY=""
 CARD_WIDTH="2.5"
 CARD_HEIGHT="3.5"
 CARD_SPACING="0.0"
+DUPLEX=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -81,6 +83,10 @@ while [[ $# -gt 0 ]]; do
         --card-spacing)
             CARD_SPACING="$2"
             shift 2
+            ;;
+        --duplex)
+            DUPLEX="--duplex"
+            shift
             ;;
         *)
             echo "Error: Unknown option $1"
@@ -198,6 +204,12 @@ echo "$SPRITES_OUTPUT"
 
 MODELS_OUTPUT=$("$SCRIPT_DIR/tts-extract-models" "$WORKSHOP_JSON" 2>&1)
 echo "$MODELS_OUTPUT"
+
+BUNDLES_OUTPUT=$("$SCRIPT_DIR/tts-extract-bundles" "$WORKSHOP_JSON" 2>&1)
+echo "$BUNDLES_OUTPUT"
+
+PDFS_OUTPUT=$("$SCRIPT_DIR/tts-extract-pdfs" "$WORKSHOP_JSON" $NO_VERIFY 2>&1)
+echo "$PDFS_OUTPUT"
 echo ""
 
 # Parse what was found (head -1 to avoid multi-line matches)
@@ -206,11 +218,15 @@ NUM_BOARDS=$(echo "$TILES_OUTPUT" | grep -oE '[0-9]+ board' | head -1 | grep -oE
 NUM_TOKENS=$(echo "$TILES_OUTPUT" | grep -oE '[0-9]+ token' | head -1 | grep -oE '[0-9]+' || echo "0")
 NUM_SPRITES=$(echo "$SPRITES_OUTPUT" | grep -oE '[0-9]+ sprite' | head -1 | grep -oE '[0-9]+' || echo "0")
 NUM_MODELS=$(echo "$MODELS_OUTPUT" | grep -oE '[0-9]+ model texture' | head -1 | grep -oE '[0-9]+' || echo "0")
+NUM_BUNDLES=$(echo "$BUNDLES_OUTPUT" | grep -oE '[0-9]+ bundle texture' | head -1 | grep -oE '[0-9]+' || echo "0")
+NUM_PDFS=$(echo "$PDFS_OUTPUT" | grep -oE '[0-9]+ Custom_PDF' | head -1 | grep -oE '[0-9]+' || echo "0")
 
 HAS_CARDS=false
 HAS_TILES=false
 HAS_BOARDS=false
 HAS_MODELS=false
+HAS_BUNDLES=false
+HAS_PDFS=false
 
 if [[ "$NUM_SPRITES" -gt 0 ]]; then
     HAS_CARDS=true
@@ -229,6 +245,14 @@ if [[ "$NUM_MODELS" -gt 0 ]]; then
     HAS_MODELS=true
 fi
 
+if [[ "$NUM_BUNDLES" -gt 0 ]]; then
+    HAS_BUNDLES=true
+fi
+
+if [[ "$NUM_PDFS" -gt 0 ]]; then
+    HAS_PDFS=true
+fi
+
 # Step 5: Generate PDFs
 echo "Step 5/6: Generating PDFs..."
 GENERATED=()
@@ -239,7 +263,8 @@ if [[ "$HAS_CARDS" == "true" ]]; then
     "$SCRIPT_DIR/tts-generate-pdf" "$WORKSHOP_JSON" \
         --card-width "$CARD_WIDTH" \
         --card-height "$CARD_HEIGHT" \
-        --card-spacing "$CARD_SPACING"
+        --card-spacing "$CARD_SPACING" \
+        $DUPLEX
     GENERATED+=("complete_deck_faces_with_backs.pdf" "complete_deck_faces_no_backs.pdf" "complete_deck_backs.pdf" "complete_deck_shared_backs.pdf")
 else
     echo "  No card decks found, skipping deck PDFs"
@@ -270,6 +295,22 @@ if [[ "$HAS_MODELS" == "true" ]]; then
     GENERATED+=("model_textures.pdf")
 else
     echo "  No 3D model textures found, skipping model textures PDF"
+fi
+
+if [[ "$HAS_BUNDLES" == "true" ]]; then
+    echo ""
+    echo "  Generating bundle textures PDF..."
+    "$SCRIPT_DIR/tts-generate-model-textures-pdf" -m "$DESERIALIZED_DIR/bundle_texture_metadata.json" -o "$DESERIALIZED_DIR/bundle_textures.pdf"
+    GENERATED+=("bundle_textures.pdf")
+else
+    echo "  No asset bundle textures found, skipping bundle textures PDF"
+fi
+
+if [[ "$HAS_PDFS" == "true" ]]; then
+    echo ""
+    echo "  Custom PDFs already downloaded to PDFs/"
+else
+    echo "  No Custom_PDF objects found"
 fi
 
 echo ""
@@ -307,5 +348,18 @@ for pdf_file in "$DESERIALIZED_DIR"/*.pdf; do
         fi
     fi
 done
+
+# List downloaded Custom_PDFs
+if [[ "$HAS_PDFS" == "true" ]] && [[ -d "$DESERIALIZED_DIR/PDFs" ]]; then
+    echo ""
+    echo "Downloaded PDFs (rulebooks, charts, etc.):"
+    for pdf_file in "$DESERIALIZED_DIR/PDFs"/*.pdf; do
+        if [[ -f "$pdf_file" ]]; then
+            base=$(basename "$pdf_file")
+            SIZE=$(ls -lh "$pdf_file" | awk '{print $5}')
+            echo "  PDFs/$base ($SIZE)"
+        fi
+    done
+fi
 
 echo ""

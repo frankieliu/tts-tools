@@ -308,8 +308,8 @@ def draw_hex_outline(c, cx, cy, hex_w, hex_h, fill_color=None):
         p.lineTo(vx, vy)
     p.close()
 
-    c.setStrokeColorRGB(0.4, 0.4, 0.4)
-    c.setLineWidth(0.5)
+    c.setStrokeColorRGB(0.55, 0.45, 0.30)  # warm brown outline
+    c.setLineWidth(1.0)
     if fill_color:
         c.setFillColorRGB(*fill_color)
         c.drawPath(p, stroke=1, fill=1)
@@ -582,19 +582,18 @@ def generate_tiles_pdf(
                     height_inches = max_dim
                     width_inches = max_dim * img_aspect
 
-            # For large items, constrain to the available page area
+            # For large items, scale to fill the available page area
             max_dim = max(width_inches, height_inches)
             if max_dim >= small_item_threshold:
                 if use_landscape:
                     avail_w, avail_h = avail_landscape_w, avail_landscape_h
                 else:
                     avail_w, avail_h = avail_portrait_w, avail_portrait_h
-                if width_inches > avail_w or height_inches > avail_h:
-                    scale_down = min(avail_w / width_inches, avail_h / height_inches)
-                    width_inches *= scale_down
-                    height_inches *= scale_down
-                    width_pts = width_inches * inch
-                    height_pts = height_inches * inch
+                fit_scale = min(avail_w / width_inches, avail_h / height_inches)
+                width_inches *= fit_scale
+                height_inches *= fit_scale
+                width_pts = width_inches * inch
+                height_pts = height_inches * inch
 
             # Add item number and size to info
             item_with_info = item.copy()
@@ -667,19 +666,18 @@ def generate_tiles_pdf(
                     height_inches = max_dim
                     width_inches = max_dim * img_aspect
 
-            # For large items, constrain to the available page area
+            # For large items, scale to fill the available page area
             max_dim = max(width_inches, height_inches)
             if max_dim >= small_item_threshold:
                 if use_landscape:
                     avail_w, avail_h = avail_landscape_w, avail_landscape_h
                 else:
                     avail_w, avail_h = avail_portrait_w, avail_portrait_h
-                if width_inches > avail_w or height_inches > avail_h:
-                    scale_down = min(avail_w / width_inches, avail_h / height_inches)
-                    width_inches *= scale_down
-                    height_inches *= scale_down
-                    width_pts = width_inches * inch
-                    height_pts = height_inches * inch
+                fit_scale = min(avail_w / width_inches, avail_h / height_inches)
+                width_inches *= fit_scale
+                height_inches *= fit_scale
+                width_pts = width_inches * inch
+                height_pts = height_inches * inch
 
             # Add item number, size, and quantity to info
             item_with_info = item.copy()
@@ -722,7 +720,7 @@ def generate_tiles_pdf(
             for item_tuple in small_items:
                 img = item_tuple[3]
                 img_w, img_h = img.size
-                is_square = abs(img_w - img_h) <= 2  # allow 2px tolerance
+                is_square = abs(img_w - img_h) <= 5  # allow 5px tolerance
                 is_rgba = img.mode == 'RGBA'
                 if is_square and is_rgba:
                     if hex_ref_w is None:
@@ -794,19 +792,31 @@ def generate_tiles_pdf(
                 for page_num, page_items in enumerate(hex_pages, 1):
                     print(f"  Page {page_num}: {len(page_items)} hex tiles")
 
+                    # Draw creamy yellow page background
+                    c.setFillColorRGB(0.98, 0.95, 0.85)  # creamy yellow
+                    c.rect(0, 0, page_width, page_height, fill=1, stroke=0)
+
                     # Draw hex outlines first (behind images)
                     for item_info, width_pts, height_pts, item_image, cx, cy in page_items:
                         fill = fill_colors.get(id(item_info))
                         draw_hex_outline(c, cx, cy, width_pts, height_pts, fill_color=fill)
 
-                    # Draw tile images on top (no preserveAspectRatio so all
-                    # tiles fill the same cell size even if alpha bbox varies)
+                    # Draw tile images clipped to circles, centered on hex cells
                     for item_info, width_pts, height_pts, item_image, cx, cy in page_items:
                         img_reader = ImageReader(item_image)
+                        # Use the smaller dimension as circle diameter
+                        radius = min(width_pts, height_pts) * 0.45
                         x = cx - width_pts / 2
                         y = cy - height_pts / 2
+
+                        # Clip to circle
+                        c.saveState()
+                        p = c.beginPath()
+                        p.circle(cx, cy, radius)
+                        c.clipPath(p, stroke=0, fill=0)
                         c.drawImage(img_reader, x, y, width=width_pts, height=height_pts,
                                     mask='auto')
+                        c.restoreState()
 
                     c.showPage()
                     total_pages += 1

@@ -171,7 +171,8 @@ def generate_pdf(
     card_height: float,
     card_spacing: float,
     is_backs: bool = False,
-    full_page: bool = False
+    full_page: bool = False,
+    fill_height: bool = False
 ):
     """
     Generate a single PDF from a card list.
@@ -224,31 +225,19 @@ def generate_pdf(
                 img_w, img_h = card_image.size
                 aspect = img_w / img_h
 
-                # Scale to fill available area while preserving aspect ratio
-                if aspect > (avail_width / avail_height):
-                    # Width-limited
-                    draw_w = avail_width
-                    draw_h = avail_width / aspect
-                else:
-                    # Height-limited
-                    draw_h = avail_height
-                    draw_w = avail_height * aspect
+                # Always use landscape orientation in full-page mode
+                c.setPageSize((page_height, page_width))
+                pg_w, pg_h = page_height, page_width
+                avail_w_cur = pg_w - 2 * margin
+                avail_h_cur = pg_h - 2 * margin
 
-                # Rotate page to landscape if card is landscape
-                if img_w > img_h:
-                    c.setPageSize((page_height, page_width))
-                    pg_w, pg_h = page_height, page_width
-                    avail_w_cur = pg_w - 2 * margin
-                    avail_h_cur = pg_h - 2 * margin
-                    if aspect > (avail_w_cur / avail_h_cur):
-                        draw_w = avail_w_cur
-                        draw_h = avail_w_cur / aspect
-                    else:
-                        draw_h = avail_h_cur
-                        draw_w = avail_h_cur * aspect
+                # Scale to fill available area while preserving aspect ratio
+                if aspect > (avail_w_cur / avail_h_cur):
+                    draw_w = avail_w_cur
+                    draw_h = avail_w_cur / aspect
                 else:
-                    c.setPageSize(letter)
-                    pg_w, pg_h = page_width, page_height
+                    draw_h = avail_h_cur
+                    draw_w = avail_h_cur * aspect
 
                 x = (pg_w - draw_w) / 2
                 y = (pg_h - draw_h) / 2
@@ -267,6 +256,95 @@ def generate_pdf(
 
         c.save()
         print(f"\n✓ Saved {output_file.name}: {total_pages} pages, {total_cards} cards")
+        return
+
+    if fill_height:
+        margin = 0.25 * inch
+        avail_width = page_width - 2 * margin
+        avail_height = page_height - 2 * margin
+
+        c = pdf_canvas.Canvas(str(output_file), pagesize=letter)
+        card_spacing_pts = card_spacing * inch
+        total_pages = 0
+        card_idx = 0
+
+        print(f"\nGenerating {output_file.name} (fill-height mode)...")
+
+        while card_idx < total_cards:
+            # Start a new page
+            row_x = margin
+            page_card_count = 0
+
+            while card_idx < total_cards:
+                card_info = card_list[card_idx]
+                sprite_path_str = str(card_info['sprite_path'])
+                if sprite_path_str not in sprite_cache:
+                    try:
+                        sprite_cache[sprite_path_str] = Image.open(card_info['sprite_path'])
+                    except Exception as e:
+                        print(f"  Error loading sprite sheet {card_info['sprite_path']}: {e}")
+                        card_idx += 1
+                        continue
+
+                sprite_image = sprite_cache[sprite_path_str]
+
+                try:
+                    card_image = extract_card_from_sprite_sheet(
+                        sprite_image,
+                        card_info['grid_width'],
+                        card_info['grid_height'],
+                        card_info['position'],
+                        rotate_if_landscape=False
+                    )
+
+                    img_w, img_h = card_image.size
+                    aspect = img_w / img_h
+
+                    # For landscape cards, use landscape page orientation
+                    if aspect > 1.0:
+                        c.setPageSize((page_height, page_width))
+                        pg_w, pg_h = page_height, page_width
+                    else:
+                        c.setPageSize((page_width, page_height))
+                        pg_w, pg_h = page_width, page_height
+                    cur_avail_w = pg_w - 2 * margin
+                    cur_avail_h = pg_h - 2 * margin
+
+                    # Scale card to fill available height, cap to available width
+                    draw_h = cur_avail_h
+                    draw_w = cur_avail_h * aspect
+                    if draw_w > cur_avail_w:
+                        draw_w = cur_avail_w
+                        draw_h = cur_avail_w / aspect
+
+                    # Check if this card fits in the remaining row width
+                    needed_width = draw_w + (card_spacing_pts if page_card_count > 0 else 0)
+                    if page_card_count > 0 and row_x + needed_width > pg_w - margin:
+                        break  # Start a new page
+
+                    x = row_x + (card_spacing_pts if page_card_count > 0 else 0)
+                    y = (pg_h - draw_h) / 2
+
+                    img_reader = ImageReader(card_image)
+                    c.drawImage(img_reader, x, y, width=draw_w, height=draw_h, preserveAspectRatio=True)
+
+                    row_x = x + draw_w
+                    page_card_count += 1
+                    card_idx += 1
+
+                except Exception as e:
+                    print(f"  Error extracting card {card_info['card_id']} position {card_info['position']}: {e}")
+                    card_idx += 1
+
+            total_pages += 1
+            if card_idx < total_cards:
+                c.showPage()
+
+            if total_pages % 10 == 0:
+                print(f"  Page {total_pages} complete...")
+
+        c.save()
+        print(f"\n✓ Saved {output_file.name}: {total_pages} pages, {total_cards} cards (fill-height)")
         return
 
     cards_per_page = 9
@@ -353,7 +431,9 @@ def generate_deck_pdf(
     card_width: float = 2.5,
     card_height: float = 3.5,
     card_spacing: float = 0.0,
-    full_page: bool = False
+    full_page: bool = False,
+    fill_height: bool = False,
+    duplex: bool = False
 ):
     """
     Generate three PDFs: faces with backs, faces without backs, and backs.
@@ -366,6 +446,7 @@ def generate_deck_pdf(
         card_width: Card width in inches (default 2.5)
         card_height: Card height in inches (default 3.5)
         card_spacing: Spacing between cards in inches (default 0.0)
+        duplex: If True, shared backs get one back per card (1:1 with faces) and mirrored
     """
     # Extract all card IDs from JSON
     print("Extracting card IDs from JSON...")
@@ -446,22 +527,38 @@ def generate_deck_pdf(
             else:
                 cards_without_backs.append(card_info.copy())
 
-                # Collect one copy of each distinct shared back image
                 back_url = sprite_info.get('back_url', '')
                 back_image_path = sprite_info.get('local_back_image', '')
-                if back_url and back_url not in shared_backs_seen and back_image_path:
-                    back_image = Path(back_image_path)
-                    if back_image.exists():
-                        shared_backs_seen.add(back_url)
-                        shared_back_info = {
-                            'card_id': card_id,
-                            'deck_id': deck_id,
-                            'position': 0,
-                            'sprite_path': back_image,
-                            'grid_width': 1,
-                            'grid_height': 1,
-                        }
-                        shared_backs_list.append(shared_back_info)
+
+                if duplex:
+                    # Duplex mode: one back entry per card instance (1:1 with faces)
+                    if back_image_path:
+                        back_image = Path(back_image_path)
+                        if back_image.exists():
+                            shared_back_info = {
+                                'card_id': card_id,
+                                'deck_id': deck_id,
+                                'position': 0,
+                                'sprite_path': back_image,
+                                'grid_width': 1,
+                                'grid_height': 1,
+                            }
+                            shared_backs_list.append(shared_back_info)
+                else:
+                    # Default: collect one copy of each distinct shared back image
+                    if back_url and back_url not in shared_backs_seen and back_image_path:
+                        back_image = Path(back_image_path)
+                        if back_image.exists():
+                            shared_backs_seen.add(back_url)
+                            shared_back_info = {
+                                'card_id': card_id,
+                                'deck_id': deck_id,
+                                'position': 0,
+                                'sprite_path': back_image,
+                                'grid_width': 1,
+                                'grid_height': 1,
+                            }
+                            shared_backs_list.append(shared_back_info)
 
         back_indicator = " (unique back)" if has_unique_back else ""
         print(f"  Deck {deck_id}, Position {position}: {count} copies{back_indicator}")
@@ -470,7 +567,10 @@ def generate_deck_pdf(
     print(f"  Cards with unique backs: {len(cards_with_backs)}")
     print(f"  Cards without unique backs: {len(cards_without_backs)}")
     print(f"  Unique backs: {len(backs_list)}")
-    print(f"  Shared backs (distinct): {len(shared_backs_list)}")
+    if duplex:
+        print(f"  Shared backs (duplex, 1:1 with faces): {len(shared_backs_list)}")
+    else:
+        print(f"  Shared backs (distinct): {len(shared_backs_list)}")
 
     # Generate PDFs
     if cards_with_backs:
@@ -482,7 +582,8 @@ def generate_deck_pdf(
             card_height,
             card_spacing,
             is_backs=False,
-            full_page=full_page
+            full_page=full_page,
+            fill_height=fill_height
         )
 
     if cards_without_backs:
@@ -494,7 +595,8 @@ def generate_deck_pdf(
             card_height,
             card_spacing,
             is_backs=False,
-            full_page=full_page
+            full_page=full_page,
+            fill_height=fill_height
         )
 
     if backs_list:
@@ -506,7 +608,8 @@ def generate_deck_pdf(
             card_height,
             card_spacing,
             is_backs=True,
-            full_page=full_page
+            full_page=full_page,
+            fill_height=fill_height
         )
 
     if shared_backs_list:
@@ -517,8 +620,9 @@ def generate_deck_pdf(
             card_width,
             card_height,
             card_spacing,
-            is_backs=False,
-            full_page=full_page
+            is_backs=duplex,
+            full_page=full_page,
+            fill_height=fill_height
         )
 
 
@@ -533,6 +637,8 @@ if __name__ == '__main__':
     parser.add_argument('--card-height', type=float, default=3.5, help='Card height in inches (default: 3.5)')
     parser.add_argument('--card-spacing', type=float, default=0.0, help='Spacing between cards in inches (default: 0.0)')
     parser.add_argument('--full-page', action='store_true', help='One card per page, scaled to fill with 0.25" margins')
+    parser.add_argument('--fill-height', action='store_true', help='Cards scaled to fill page height, packed side-by-side')
+    parser.add_argument('--duplex', action='store_true', help='Shared backs 1:1 with faces, mirrored for double-sided printing')
 
     args = parser.parse_args()
 
@@ -554,5 +660,7 @@ if __name__ == '__main__':
         card_width=args.card_width,
         card_height=args.card_height,
         card_spacing=args.card_spacing,
-        full_page=args.full_page
+        full_page=args.full_page,
+        fill_height=args.fill_height,
+        duplex=args.duplex
     )

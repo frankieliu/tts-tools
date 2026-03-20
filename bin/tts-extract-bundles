@@ -1,0 +1,91 @@
+#!/bin/bash
+# tts-extract-bundles - Extract textures from Unity Asset Bundle (.unity3d) files
+# Part of tts-tools unified workflow
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Show help
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [[ -z "$1" ]]; then
+    cat << EOF
+Usage: tts-extract-bundles <json_file> [options]
+
+Extract textures from Unity Asset Bundle (.unity3d) files in TTS mods.
+Finds the Assetbundles/ directory relative to the JSON file, extracts
+all Texture2D and Sprite objects, and saves them as PNGs.
+
+Arguments:
+  json_file                Path to TTS JSON file (Workshop/*.json)
+
+Options:
+  -o, --output FILE        Output metadata file (default: bundle_texture_metadata.json)
+  --all                    Include technical textures (normal maps, AO, etc.)
+  -v, --verbose            Show detailed progress
+  -h, --help              Show this help message
+
+Examples:
+  tts-extract-bundles Workshop/*.json
+  tts-extract-bundles Workshop/mod.json -o metadata.json
+  tts-extract-bundles Workshop/*.json --all
+
+Output:
+  bundle_texture_metadata.json   # Texture metadata for PDF generation
+  BundleTextures/                # Extracted PNG files
+
+Notes:
+  - Run this from the mod's .deserialized/ directory
+  - Requires Assetbundles/ directory with downloaded .unity3d files
+  - Requires UnityPy: uv pip install UnityPy
+EOF
+    exit 0
+fi
+
+# Convert relative paths to absolute paths
+ORIG_DIR="$(pwd)"
+ARGS=()
+HAS_OUTPUT=false
+PREV_ARG=""
+
+for arg in "$@"; do
+    if [[ "$PREV_ARG" == "-o" ]] || [[ "$PREV_ARG" == "--output" ]]; then
+        HAS_OUTPUT=true
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    elif [[ -f "$arg" ]] || [[ -d "$arg" ]] || [[ "$arg" == *"/"* ]]; then
+        if [[ "$arg" == /* ]]; then
+            ARGS+=("$arg")
+        else
+            ARGS+=("$ORIG_DIR/$arg")
+        fi
+        PREV_ARG="$arg"
+    else
+        ARGS+=("$arg")
+        PREV_ARG="$arg"
+    fi
+done
+
+# If no output was specified, save next to the input JSON's .deserialized/ dir
+if [[ "$HAS_OUTPUT" == "false" ]]; then
+    TARGET_DIR="$ORIG_DIR"
+    for a in "${ARGS[@]}"; do
+        if [[ "$a" == *.json ]] && [[ -f "$a" ]]; then
+            INPUT_DIR="$(dirname "$a")"
+            if [[ "$(basename "$INPUT_DIR")" == "Workshop" ]]; then
+                TARGET_DIR="$(dirname "$INPUT_DIR")"
+            else
+                TARGET_DIR="$INPUT_DIR"
+            fi
+            break
+        fi
+    done
+    ARGS+=("-o" "$TARGET_DIR/bundle_texture_metadata.json")
+fi
+
+# Run with uv
+cd "$SCRIPT_DIR"
+uv run src/extract_bundle_textures.py "${ARGS[@]}"

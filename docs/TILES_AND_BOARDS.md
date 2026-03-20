@@ -102,6 +102,9 @@ tts-generate-tiles-pdf <json_file> [options]
 - `--tokens-only` - Generate only tokens
 - `--no-labels` - Do not draw text labels
 - `--group` - Group duplicate items (default: print all copies individually)
+- `--hex-strip` - Arrange hex tiles in rows offset by half a hex width (preferred hex mode)
+- `--hex-grid` - Arrange hex tiles in honeycomb column grid
+- `--hex-include PATTERN...` - Include non-hex tokens matching nickname patterns in hex grid
 
 **Auto-Detection:**
 By default, the tool automatically detects the correct scale factor by analyzing card decks in the mod. It assumes standard poker card dimensions (88mm height) and calculates the appropriate scale factor. You can override this with `--scale-factor` if needed.
@@ -279,13 +282,16 @@ The following have been implemented since the initial version:
 - Small item packing (multiple tokens/small tiles per page)
 - Landscape page rotation for wide images
 - Image aspect ratio preservation for large items
+- **Hex grid layouts** (`--hex-strip`, `--hex-grid`) for round tokens and hex tiles — see [HEX_TILE_LAYOUT.md](HEX_TILE_LAYOUT.md)
+- **Infinite Bag support** (`--infinite-count N` on `tts-extract-tiles`) for multiplying template items from TTS Infinite_Bag containers
+- **Fill-height card mode** (`--fill-height` on `tts-generate-pdf`) for cards scaled to fill page height, packed side-by-side
+- **Configurable board margins** (`--margin` on `tts-generate-board-pdf`, default 0.5", use 0.25" for tighter borders)
 
 ## Future Improvements
 
 Potential enhancements:
 - Custom page sizes (A4, legal, tabloid)
-- Support for Custom_Model textures
-- Pipeline integration for tiles
+- Pointy-top hex orientation option
 
 ---
 
@@ -298,4 +304,5 @@ Potential enhancements:
 - **Small items** are packed onto shared pages
 - **Large items** get one per page with automatic landscape rotation
 - Use **`--group`** to group duplicates (default prints all copies)
+- Use **`--hex-strip`** for round tokens / hex tiles — see [HEX_TILE_LAYOUT.md](HEX_TILE_LAYOUT.md)
 - For large boards spanning multiple pages, use `tts-generate-board-pdf`
