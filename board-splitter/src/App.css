@@ -44,7 +44,7 @@ body {
 .toolbar {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   padding: 8px 16px;
   background: #16213e;
   border-bottom: 1px solid #333;
@@ -308,4 +308,184 @@ body {
   color: #666;
   font-size: 13px;
   text-align: center;
+}
+
+/* PDF Settings */
+.pdf-settings {
+  padding: 0 0 4px;
+  border-bottom: 1px solid #333;
+}
+
+.pdf-settings h3 {
+  padding: 12px 16px 8px;
+  font-size: 14px;
+  border-bottom: none;
+}
+
+.pdf-setting-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 16px;
+  font-size: 12px;
+}
+
+.pdf-setting-row > label {
+  min-width: 44px;
+  color: #aaa;
+  font-size: 12px;
+}
+
+.pdf-setting-row input[type="range"] {
+  flex: 1;
+  height: 4px;
+  accent-color: #4488ff;
+  cursor: pointer;
+}
+
+.dpi-input {
+  width: 52px;
+  font-size: 12px;
+  background: #0a1628;
+  border: 1px solid #333;
+  color: #e0e0e0;
+  padding: 2px 4px;
+  border-radius: 2px;
+  text-align: center;
+}
+
+.dpi-input:focus {
+  border-color: #4488ff;
+  outline: none;
+}
+
+.pdf-setting-value {
+  color: #888;
+  font-size: 12px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: #ccc;
+}
+
+.checkbox-label input[type="checkbox"] {
+  accent-color: #4488ff;
+  cursor: pointer;
+}
+
+/* Page split overlay */
+.page-split-line {
+  position: absolute;
+  pointer-events: none;
+}
+
+.page-split-vertical {
+  border-left-style: dashed;
+  width: 0;
+}
+
+.page-split-horizontal {
+  border-top-style: dashed;
+  height: 0;
+}
+
+.page-number-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-weight: bold;
+  border-radius: 3px;
+  padding: 1px 4px;
+  pointer-events: none;
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+/* Section page info */
+.section-pages {
+  font-size: 11px;
+  color: #5a9;
+  margin-top: 1px;
+  padding-left: 20px;
+}
+
+/* Generate PDFs button */
+.generate-btn {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #4488ff;
+  border-radius: 4px;
+  background: #1a3060;
+  color: #e0e0e0;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+
+.generate-btn:hover:not(:disabled) {
+  background: #244080;
+}
+
+.generate-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+  border-color: #444;
+}
+
+/* Mode toggle buttons */
+.mode-toggle {
+  display: flex;
+  gap: 2px;
+  background: #0a1628;
+  border-radius: 5px;
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+.mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: #888;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.mode-btn:hover {
+  color: #ccc;
+  background: #1a2a4a;
+}
+
+.mode-btn.active {
+  background: #2a4a7a;
+  color: #fff;
+}
+
+.mode-btn svg {
+  flex-shrink: 0;
+}
+
+/* Edge disambiguation label */
+.edge-label {
+  position: absolute;
+  transform: translate(-50%, -120%);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: 3px;
+  padding: 2px 6px;
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 0.9;
+  z-index: 5;
 }
